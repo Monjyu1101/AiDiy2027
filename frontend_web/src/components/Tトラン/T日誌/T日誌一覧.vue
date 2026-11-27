@@ -9,7 +9,7 @@ import QTable from '../../_share/qTublerFrame.vue';
 import type { Column } from '../../../types/qTubler';
 import { エラー表示, 日誌操作, ローカル日付 } from './日誌API';
 import type { 日誌一覧, 日誌一覧候補 } from './日誌API';
-import { 日誌検索状態, 画面遷移先 } from './日誌画面';
+import { 日付値, 日付範囲を移動, 日誌検索状態, 画面遷移先 } from './日誌画面';
 
 import { useAuthStore } from '../../../stores/auth';
 
@@ -17,10 +17,20 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const 初期検索状態 = 日誌検索状態(router, auth.user?.利用者ID);
-const 日付値 = (value: unknown) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
-const 初期開始日付 = () => 日付値(route.query.開始日付) || ローカル日付();
-const 開始日付 = ref(初期開始日付());
-const 終了日付 = ref(日付値(route.query.終了日付) || 開始日付.value);
+function 初期日付範囲() {
+  const 開始 = 日付値(route.query.開始日付);
+  const 終了 = 日付値(route.query.終了日付);
+  if (開始 || 終了) return { 開始: 開始 || 終了, 終了: 終了 || 開始 };
+  const 今日 = ローカル日付();
+  return 日付範囲を移動(今日, '月', 0) ?? { 開始: 今日, 終了: 今日 };
+}
+const 初期範囲 = 初期日付範囲();
+const 開始日付 = ref(初期範囲.開始);
+const 終了日付 = ref(初期範囲.終了);
+const 前月 = computed(() => 日付範囲を移動(開始日付.value, '月', -1));
+const 前日 = computed(() => 日付範囲を移動(開始日付.value, '日', -1));
+const 翌日 = computed(() => 日付範囲を移動(終了日付.value, '日', 1));
+const 翌月 = computed(() => 日付範囲を移動(終了日付.value, '月', 1));
 const 同一日 = computed(() => Boolean(開始日付.value && 開始日付.value === 終了日付.value));
 const 利用者ID = ref(初期検索状態.日誌検索利用者);
 const プロジェクト = ref(初期検索状態.日誌検索プロジェクト);
@@ -120,15 +130,11 @@ function 開始日変更(event: Event) {
   開始日付.value = 終了日付.value = value;
 }
 
-async function 日付を移動(日数: -1 | 1) {
-  if (!同一日.value) return;
-  // UTC の暦日として加減し、夏時間や月・年の境界でも正しく日付を進める。
-  const date = new Date(`${開始日付.value}T00:00:00Z`);
-  if (!Number.isFinite(date.getTime())) return;
-  date.setUTCDate(date.getUTCDate() + 日数);
-  if (date.getUTCFullYear() < 1 || date.getUTCFullYear() > 9999) return;
-  開始日付.value = 終了日付.value = date.toISOString().slice(0, 10);
-  await 一覧取得();
+function 日付を移動(範囲: ReturnType<typeof 日付範囲を移動>) {
+  if (!範囲) return;
+  開始日付.value = 範囲.開始;
+  終了日付.value = 範囲.終了;
+  検索();
 }
 
 let 最新検索 = 0;
@@ -165,8 +171,9 @@ async function 一覧取得() {
   }
 }
 watch(() => [route.query.開始日付, route.query.終了日付, route.query.件数制限], () => {
-  開始日付.value = 初期開始日付();
-  終了日付.value = 日付値(route.query.終了日付) || 開始日付.value;
+  const 範囲 = 初期日付範囲();
+  開始日付.value = 範囲.開始;
+  終了日付.value = 範囲.終了;
   件数制限.value = route.query.件数制限 !== 'false';
   void 一覧取得();
 });
@@ -204,15 +211,15 @@ onMounted(() => {
             <div class="search-panel">
               <div class="detail-row date-row">
                 <span class="detail-label">日付範囲</span>
-                <div class="detail-value date-range">
+                <div class="detail-value date-range" role="group" aria-label="日付範囲">
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="前月" title="前月" :disabled="!前月" @click="日付を移動(前月)">＜＜</button>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="前日" title="前日" :disabled="!前日" @click="日付を移動(前日)">＜</button>
                   <input :value="開始日付" type="date" class="detail-input date-input" aria-label="開始日付"
                     @input="開始日変更">
-                  <span class="range-separator">〜</span>
+                  <span class="range-separator">～</span>
                   <input v-model="終了日付" type="date" class="detail-input date-input" aria-label="終了日付">
-                  <div v-if="同一日" class="day-navigation">
-                    <button type="button" class="btn btn-secondary" aria-label="前日" title="前日" @click="日付を移動(-1)">−</button>
-                    <button type="button" class="btn btn-secondary" aria-label="翌日" title="翌日" @click="日付を移動(1)">＋</button>
-                  </div>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="翌日" title="翌日" :disabled="!翌日" @click="日付を移動(翌日)">＞</button>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="翌月" title="翌月" :disabled="!翌月" @click="日付を移動(翌月)">＞＞</button>
                 </div>
               </div>
               <div class="detail-row">
@@ -340,30 +347,28 @@ onMounted(() => {
 }
 .search-panel .date-range {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
-  gap: 4px 8px;
+  grid-template-columns: auto auto minmax(0, 1fr) auto minmax(0, 1fr) auto auto;
+  gap: 4px;
   width: auto;
 }
-.day-navigation { display: flex; gap: 4px; }
-.day-navigation .btn { width: 28px; height: 28px; padding: 0; }
+.range-nav { min-width: 24px; height: 28px; padding: 0 2px; white-space: nowrap; font-size: 12px; }
 
 @media (max-width: 640px) {
   .section { --search-label-width: 108px; --search-value-padding: 8px; }
 }
 
-@media (max-width: 465px) {
-  .search-panel .date-range { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
-  .search-panel .date-input { padding-inline: 3px; }
-  .day-navigation { grid-column: 1 / -1; justify-self: end; }
-}
-
-@media (max-width: 370px) {
+@media (max-width: 520px) {
   .search-panel .date-row { flex-direction: column; }
   .search-panel .date-row .detail-label { width: 100%; min-height: 0; justify-content: flex-start; padding-block: 4px; }
   .search-panel .date-range {
     border-top: 0;
     border-left: 1px solid #ccc;
   }
+}
+@media (max-width: 370px) {
+  .search-panel .date-range { padding-inline: 4px; gap: 2px; }
+  .search-panel .date-input { padding-inline: 2px; font-size: 12px; }
+  .range-nav { min-width: 19px; padding: 0 1px; font-size: 11px; }
 }
 .work-line { display: flex; align-items: center; min-height: 26px; }
 .work-line + .work-line { border-top: 1px solid #e2e8f0; }
