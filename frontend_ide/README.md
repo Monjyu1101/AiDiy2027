@@ -1,6 +1,6 @@
 # AiDiy IDE（Vue）
 
-IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は9種類です。
+IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU は共通 Vue 3 画面を使います。Git パネルを含めて10種類を単独起動できます。VS Code 拡張は Code / Live の2種類です。
 
 
 ## 導入・起動の要件
@@ -9,7 +9,7 @@ IDE群全体は **Node.js 22.13 以降と npm** を使用してください。`v
 
 - Vue 3はプロジェクトのnpm依存です。グローバルのVue CLIは不要です。共有画面・依存物の復旧は `python frontend_ide/_setup.py` を使います。
 - VS Codeは **Code / Liveの拡張配置時だけ** 必要です（`^1.106.0`）。CLI未導入では通常setupは単独画面だけを準備します。版数不足・版数不明は警告して従来の配置処理へ進み、`--extensions-only` も実際のCLI結果に従います。
-- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Navi / Term / Code / Live / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
+- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。IDE / Term / Navi / Code / Live / Task / Team / Git / CPU は Web 起動にも対応します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
 - cleanupにはNode.js・Electron・VS Codeの最低版チェックを追加しません。Code / Liveの拡張解除は従来どおりVS Code CLIで確認し、確認不能なら生成物を残して失敗を報告します。依存を直す前にcleanupする必要はありません。
 
 ## ソースの配置
@@ -19,6 +19,7 @@ IDE群全体は **Node.js 22.13 以降と npm** を使用してください。`v
 - `ファイル機能/`: AI検索、ファイル解析、履歴と記録保存。
 - `aidiy_term/`: Termの入口とPTY・端末プロセス。`aidiy_code/` / `aidiy_live/` / `aidiy_ide/` は各コマンドの入口です。
 - `src/`: 共通Vue画面。通常部品と機能内処理は `src/components/<日本語機能名>/`、独立ダイアログは `src/dialog/`。Task / Team は専用 bundle の機能内構成を維持。`host/`: Code / Live通信とVS Code拡張。`viewer/`: ファイルAPIと文書表示。
+- `aidiy_git/`: Git パネルとローカルサーバー。
 - `scripts/` / `checks/`: 開発用スクリプトとテスト。
 
 ルートの `index.html`、`package.json`、`package-lock.json`、`_setup.py`、`_cleanup.py`、`.cmd` はビルド・導入・起動に必要です。`dist/` と `node_modules/` はセットアップで準備する生成物・依存関係で、ソースの移動先ではありません。
@@ -150,13 +151,13 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 ## 起動
 
 セットアップはリポジトリ直下で `python frontend_ide/_setup.py`。既存の全体セットアップからも共通画面を準備します。
-Windowsではセットアップが各アプリのプロジェクト内binをユーザーPATHへ登録します。完了後にターミナルやVS Codeを開き直し、表示したいフォルダで `aidiy_ide`、`aidiy_term`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。既に開いている呼出元のシェルにはPATHは反映されません。Linux / macOSでは表示された現在のシェル用PATH設定を実行してください。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
+Windowsではセットアップが各アプリのプロジェクト内binをユーザーPATHへ登録します。完了後にターミナルやVS Codeを開き直し、表示したいフォルダで `aidiy_ide`、`aidiy_term`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_git`、`aidiy_cpu` を実行します。既に開いている呼出元のシェルにはPATHは反映されません。Linux / macOSでは表示された現在のシェル用PATH設定を実行してください。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。全10種類が `launch.mjs` を使います。Task / Team は専用の Vue bundle、Git は `aidiy_git/serve.mjs` のパネルを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
 
 PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / term / code / live / task / team / browser / cpuも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` は選択したHermes／Piを直接使用します。Navi用Codeも同じ選択画面・保存設定を使います。Liveの `--connect` は初回だけ接続します。
 
 Electron版IDEの二重起動防止は同じプロジェクトだけに適用します。同じフォルダで再実行すると、起動済みのIDEを最小化から戻して前面に表示します。別のプロジェクトは同時に開け、それぞれのIDE・子窓・利用セッションは独立します。相対パス・リンクなどで同じ実フォルダを指定した場合も既存窓を再利用します。単独Code / Liveの種別ごとの再利用と、Termの複数起動は従来どおりです。
 
-IDEは初期画面の3行案内の下にある「AiDiy接続利用」「オフライン利用」で手動開始します。開始ボタンは高さ52px以上で、狭い画面では縦に並びます。利用開始後にtoolsとの接続を失っても、ファイル表示・作業起点・Code子窓を維持し、tools復帰時に再接続します。初回接続失敗は手動で再試行します。オフラインの起動メニューは「Term」「Browser」「Code」の3項目だけです。Browserはtools未接続でも操作でき、AI解析だけtools接続中に有効になります。
+IDEは初期画面の3行案内の下にある「AiDiy接続利用」「オフライン利用」で手動開始します。開始ボタンは高さ52px以上で、狭い画面では縦に並びます。利用開始後にtoolsとの接続を失っても、ファイル表示・作業起点・Code子窓を維持し、tools復帰時に再接続します。初回接続失敗は手動で再試行します。オフラインでも「Term」「Browser」「Code」「Git」「CPU」を開けます。Git パネルはプロジェクトのルートか直下に利用可能な Git リポジトリがある場合に有効です。Browserはtools未接続でも操作でき、AI解析だけtools接続中に有効になります。
 
 宇宙表示の自動飛行は彗星のような楕円軌道を進み、船首は現在フォルダの中心を向きます。最遠点ごとに全方向から軌道を選び、フォルダがあれば2回に1回その銀河内を通過します。再開時は現在地で進路へ向き直ってから前進します。ファイル選択中・フォルダ移動中は停止し、手動操作後は最後の操作から1分停止します。ドラッグだけは例外として中心星を軸に球をつかむように回り込みます。視点が傾いたり上下反転していても、手前側の星は左ドラッグで左、上ドラッグで上へ動き、中心星の位置と周回距離は保ちます。移動後の位置・向きを宇宙船の現在地として扱います。スペースキーで自動飛行の有効・無効を切り替えられます。
 
@@ -311,7 +312,7 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 - 同じ Electron 確認で、タイトルバーの最大化／元のサイズへの復元も実ウィンドウで検証します。
 - 音声・バックエンドの回帰確認: `frontend_ide/host` の `npm test` / `npm run live:test`、`frontend_ide/viewer` の `npm test`。
 
-全体のsetup・cleanupはIDE / Term / Browser / Navi / Code / Live / Task / Team / CPUをまとめて扱います。全体startはDiagを使わない場合、IDE / Term / Code / LiveやTask / Team / CPU（既定OFF）を個別に選択できます。Navi / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはIDE → Term → Browser → Navi → Code → Live → Task → Team → CPU → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
+全体の setup・cleanup は IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU をまとめて扱います。全体startはDiagを使わない場合、IDE / Term / Code / LiveやTask / Team / CPU（既定OFF）を個別に選択できます。Navi / Browser / Git は独立コマンドや Diag から起動します。セットアップで稼働中の画面を停止しません。cleanupはIDE → Term → Browser → Navi → Code → Live → Task → Team → Git → CPU → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
 
 ## ウィンドウ配置
 

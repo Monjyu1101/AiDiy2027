@@ -52,7 +52,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 - 拡張側から `--yolo` を付与せず、Hermes 側の承認・ツール設定を維持する。
 - Code の AIコア接続と Webview 中継では、既存の `AIコード.vue` / `AIコード.py` / `AIコード_cli.py` と同じメッセージ識別子を使う。
 - Live は既存 AIコアの WebSocket（`/core/ws/AIコア`）とモデル情報 API をそのまま使い、拡張専用の API を追加しない。
-- `src/runner.ts`、`src/protocol.ts`、`aidiy_live/src/protocol.ts`、`src/model-preferences.ts`、`scripts/model-catalog.py` は `frontend_channels/discord` と共有する。export 名や引数を変える場合は `frontend_channels/discord/src/共通連携/IDE連携.ts` と利用箇所を合わせて更新する。
+- `src/runner.ts`、`src/protocol.ts`、`aidiy_live/src/protocol.ts`、`src/model-preferences.ts`、`scripts/model-catalog.py` は `frontend_channels/discord` と共有する（`frontend_channels/slack` も音声関連を除く `src/runner.ts`・`src/protocol.ts`・`src/model-preferences.ts` を共有）。export 名や引数を変える場合は `frontend_channels/discord/src/共通連携/IDE連携.ts`・`frontend_channels/slack/src/共通連携/IDE連携.ts` と利用箇所を合わせて更新する。
 - HTML を含む Markdown は無効化し、外部画像や任意の command URI を回答から実行しない。
 - Windows デスクトップ版 VS Code を主対象とする。Codespaces のブラウザ版ではリモートの Node.js 拡張ホストを使う。Live 拡張のマイク入力は Windows のローカルホストで扱い、Codespaces では単独ブラウザ版を使う。リモートホストの Live 接続先はそのホストの AIコアとなる。仮想ワークスペースと、リモート拡張ホストのない Web 版は対象外。
 
@@ -68,7 +68,15 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `src/stream-control.ts` | STX / ETX / CAN 制御コードの判定と表示用除去 |
 | `src/model-preferences.ts` | Code / Live の最終手動モデルを `_AIDIY/aidiy_<pg>/aidiy_<pg>_model.json` へ読込・保存（Live bundle にも内包） |
 | `src/vscode-html.ts` | Webview に frontend_ide の Vue 画面（`dist/development`）を読み込む HTML |
+| `src/conversation-store.ts` | Code の会話履歴をプロジェクトの `_AIDIY/aidiy_code/histories/<会話ID>.json` へ1会話1ファイルで保存（拡張・単独起動・IDE で共通） |
+| `src/file-attachments.ts` | Avatar と同じ `input_file` / `output_file` 形式の添付ファイルの件数・サイズ境界 |
+| `src/input-prediction.ts` | 現在の Code 会話だけを tools の内部RESTへ渡す次入力予測 |
+| `src/internal-auth.ts` / `src/extension-installation.ts` | 内部認証ヘッダーを要求ごとに配置先から読み直す処理と、配置済み拡張の記録からの接続先・CLI 参照元の解決 |
+| `src/forwarded-origin.ts` | `aidiy_code` / `aidiy_live` / `aidiy_discord` のブラウザ版サーバーが共用する接続元の許可判定（loopback と Codespaces 転送先のみ） |
+| `src/workspace-folder.ts` | 実行対象にできるローカルフォルダの判定 |
+| `src/arrival-effect.ts` | Code / Live 共通の発言の登場演出とターミナル演出 |
 | `aidiy_code/src/server.ts` | IDE / 単独起動の Vue 画面が使う localhost HTTP / SSE の API サーバー（画面は返さない） |
+| `aidiy_code/src/offline.ts` | AIコア未接続時のオフライン実行エンジン・モデル候補と `_offline.json` 保存先 |
 | `media/` | 拡張アイコンと、Vue 画面へ同梱する送信・停止ボタン画像 |
 | `scripts/model-catalog.py` | Hermes 既存 picker から Provider / モデル候補を取得 |
 | `aidiy_code/launch.mjs` | 作業フォルダから frontend_ide の Code 画面を起動する。`--browser` ではブラウザで開く |
@@ -92,7 +100,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 
 AiDiy IDE はCode / Liveの単独サーバーと画面を同一公開元への中継で埋め込みます。Codeの `lockedMode` 起動オプションは、IDEまたはNaviの利用モードを維持します。共通起動は `keepAlive:true` でAPIサーバーの寿命を親の `frontend_ide/server.mjs` に委ねます。Naviは窓ごとの専用Codeを使い、自動航行の要求・結果を `navigationRequestId` で照合します。
 
-Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）で、音声処理は `aidiy_live/src/audio.ts`・`visualizer.ts` を共用します。VS Code 拡張では `host.ts`（拡張ホスト）が AIコアの WebSocket、モデル情報 API、Windows マイク（`microphone.py`）を扱い、Webview へ中継します。単独起動では `src/server.ts` の localhost 中継が同じ役割を担います。接続時は input / 0 / audio の 3 本の WebSocket を開き、`connect` パケットで作業フォルダ（`CODE_BASE_PATH`）と選択したモデル設定を渡します。
+Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）で、音声処理は `aidiy_live/src/audio.ts`・`visualizer.ts` を共用します。VS Code 拡張では `host.ts`（拡張ホスト）が AIコアの WebSocket、モデル情報 API、Windows マイク（`microphone.py`）を扱い、Webview へ中継します。単独起動では `aidiy_live/src/server.ts` の localhost 中継が同じ役割を担います。接続時は input / 0 / audio の 3 本の WebSocket を開き、`connect` パケットで作業フォルダ（`CODE_BASE_PATH`）と選択したモデル設定を渡します。
 
 ## 接続と会話
 
@@ -100,7 +108,7 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 - Code のコードAIとモデルはAIコアのモデル情報APIから取得し、接続中のセッションへ反映する。
 - Code は通信切断時に約10秒間隔で再接続する。明示的な切断・破棄は再試行を止める。
 - Code の会話履歴は作業フォルダ別に管理し、AIコアのセッションIDで再開する。保存先はプロジェクトの `_AIDIY/aidiy_code/histories/<会話ID>.json`（`src/conversation-store.ts`）で、拡張・単独起動版・開発スペースが同じ形式で共用する。応答の途中経過ごとに書かないよう0.5秒まとめて書き、終了時に書き出す。旧 `workspaceState` 履歴は読み込まず、選択中の会話IDも同じプロジェクトに保存する。テストは一時フォルダへ書く（作業フォルダの `_AIDIY` に書かない）。旧Hermesの表示履歴は保持するが、CLIセッションIDをコアへ渡さない。
-- 未接続時の手動送信は `aidiy_hermes` を直接実行し、検証ループは0回に固定する。オンラインと未接続のセッション・モデルは分けて保持する。
+- 未接続時の手動送信は選択した `aidiy_hermes` / `aidiy_pi` を直接実行し、検証ループは0回に固定する。オンラインと未接続のセッション・モデルは分けて保持する。
 - 最終手動モデルはオンライン用 `_AIDIY/aidiy_code/aidiy_code_model.json`、未接続用 `_AIDIY/aidiy_code/aidiy_code_model_offline.json` に保存し、拡張・単独画面で共用する。
 - `src/runner.ts` と `src/protocol.ts` は引き続き Discord・Slack の直接CLI実行と対話CLIを支える。
 
@@ -128,7 +136,7 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 
 ## Vue共通画面
 
-現行のNavi / Term / Code / Live / IDE / Task / Team / Browser / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は [共通画面の構成](../AGENTS.md) と [Vue共通画面変更手順](../../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
+現行のNavi / Term / Code / Live / IDE / Task / Team / Browser / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は Git パネルを含めて10種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は [共通画面の構成](../AGENTS.md) と [Vue共通画面変更手順](../../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
 
 ## 拡張と単独起動の要点
 

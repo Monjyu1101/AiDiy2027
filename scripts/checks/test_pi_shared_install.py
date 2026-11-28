@@ -32,7 +32,15 @@ class PiSharedInstall(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             home = Path(folder)/'home'; home.mkdir()
             outside = Path(folder)/'outside'; outside.mkdir()
-            (home/'.local').symlink_to(outside, target_is_directory=True)
+            link = home / '.local'
+            try:
+                link.symlink_to(outside, target_is_directory=True)
+            except OSError as error:
+                if getattr(error, 'winerror', None) != 1314:
+                    raise
+                # Windowsの通常権限でも、実際に外部を指すディレクトリで保護を検証する。
+                import _winapi
+                _winapi.CreateJunction(str(outside), str(link))
             source = Path(folder)/'aidiy_pi'; source.write_text('test')
             with patch.object(Path, 'home', return_value=home):
                 with self.assertRaises(OSError): setup._path_helper.sync_shared_launcher(source, setup.ENTRY_PATH, create=True)

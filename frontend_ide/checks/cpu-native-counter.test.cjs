@@ -172,7 +172,7 @@ test('実時計の変更は周期とleaseを動かさない', async () => {
 });
 
 test('固定PowerShellはGPU・Get-CimInstance・任意コマンド実行を含まず初回baselineを捨てる', () => {
-  assert.match(windowsCpuProcessCommand, /\[Term\]::ReadLine\(\)/);
+  assert.match(windowsCpuProcessCommand, /\[Console\]::ReadLine\(\)/);
   assert.match(windowsCpuProcessCommand, /\$request -cne 'cpu'/);
   assert.match(windowsCpuSamplerCommand, /WbemScripting.SWbemRefresher/);
   assert.match(windowsCpuSamplerCommand, /Win32_PerfFormattedData_Counters_ProcessorInformation/);

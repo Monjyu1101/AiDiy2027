@@ -90,7 +90,7 @@ class HermesModelCatalogTests(unittest.TestCase):
 
     def test_slugs_read_the_chat_and_code_section_names_used_by_the_catalog_file(self):
         pairs = {"gemini": "gemini_chat", "freeai": "freeai_chat", "claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
-                 "codex-cli": "codex_cli", "copilot-cli": "copilot_cli", "opencode": "opencode_cli", "grok-cli": "grok_cli",
+                 "agy_cli": "agy_cli", "codex-cli": "codex_cli", "copilot-cli": "copilot_cli", "opencode": "opencode_cli", "grok-cli": "grok_cli",
                  "openrt_chat": "openrt_chat", "openrt_free": "openrt_free", "openai_chat": "openai_chat", "openai_oauth": "openai_oauth", "claude_chat": "claude_chat",
                  "xai-oauth": "xai_oauth"}
         for slug, key in pairs.items():
@@ -143,7 +143,7 @@ class HermesModelCatalogTests(unittest.TestCase):
             if payload is None:
                 self.path.unlink(missing_ok=True)
             else:
-                self.path.write_text(payload)
+                self.path.write_text(payload, encoding="utf-8")
             entry = self.picker._get_aidiy_provider_entry("freeai", True)
             self.assertEqual(entry["models"], [])
             self.assertTrue(entry["model_list_notice"])
@@ -212,7 +212,7 @@ class HermesModelCatalogTests(unittest.TestCase):
 
     def test_no_legacy_fallback_to_code_models_info(self):
         # 一覧は hermes_models_info.json だけから出す。ファイルが無いとき Code 一覧へは退避しない。
-        (self.path.parent / "code_models_info.json").write_text(json.dumps({"claude_cli": {"models": {"sonnet": "Existing"}}}))
+        (self.path.parent / "code_models_info.json").write_text(json.dumps({"claude_cli": {"models": {"sonnet": "Existing"}}}), encoding="utf-8")
         self.assertEqual(self.ns["_aidiy_code_model_labels"]("claude-code"), [])
         self.write({})
         self.assertEqual(self.ns["_aidiy_code_model_labels"]("claude-code"), [])
@@ -259,7 +259,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertEqual(calls[0]["aidiy_provider_slug"], "freeai")
         self.assertEqual(calls[0]["api_key"], "fake-freeai_key_id")
         cfg = {"gemini_key_id": "fake-paid-key"}
-        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg))
+        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg), encoding="utf-8")
         code, calls = self.run_entry("freeai")
         self.assertEqual((code, calls), (2, []))
         original_key = self.picker.api_key
@@ -284,7 +284,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertEqual(self.picker._explicit_base_url, "https://api.openai.com/v1")
         self.assertEqual(self.picker.api_mode, "chat_completions")
         cfg = {**self.picker._aidiy_config, "CODE_AIDIY_HERMES_MODEL": "openai_chat/gpt-configured"}
-        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg))
+        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg), encoding="utf-8")
         defaults = self.ns["_load_aidiy_hermes_defaults"]()
         self.assertEqual(defaults["model"], "gpt-configured")
         self.assertEqual(defaults["api_key"], "fake-openai_key_id")
@@ -292,7 +292,7 @@ class HermesModelCatalogTests(unittest.TestCase):
     def test_openai_chat_missing_config_key_stops_without_oauth_or_other_key(self):
         for key in [None, "", "<your-openai-key>"]:
             cfg = {"openrt_key_id": "fake-router", "ollama_key_id": "fake-ollama", "openai_key_id": key}
-            self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg))
+            self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg), encoding="utf-8")
             for provider, model in [("openai_chat", "gpt-test"), (None, "openai_chat/gpt-test")]:
                 code, calls = self.run_entry(provider, model)
                 self.assertEqual((code, calls), (2, []))
@@ -343,7 +343,7 @@ class HermesModelCatalogTests(unittest.TestCase):
 
     def test_saved_legacy_ollama_reloads_current_cloud_credentials(self):
         self.picker._aidiy_config["ollama_key_id"] = "fake-current-cloud-key"
-        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(self.picker._aidiy_config))
+        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(self.picker._aidiy_config), encoding="utf-8")
         code, calls = self.run_entry("same", "same", {"provider": "ollama", "model": "saved-model"})
         self.assertEqual(code, 0)
         self.assertEqual(calls[0]["base_url"], self.ns["_OLLAMA_CLOUD_BASE_URL"])
@@ -351,7 +351,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertEqual(calls[0]["model"], "saved-model")
 
     def test_anthropic_environment_or_stored_api_key_resolution_remains_available(self):
-        self.ns["_AIDIY_KEY_JSON"].write_text("{}")
+        self.ns["_AIDIY_KEY_JSON"].write_text("{}", encoding="utf-8")
         for provider in ["anthropic", "claude_chat"]:
             code, calls = self.run_entry(provider)
             self.assertEqual(code, 0)
@@ -367,13 +367,13 @@ class HermesModelCatalogTests(unittest.TestCase):
 const models = {{'image-understanding':'Vision', 'image-output':'Not chat', 'gemini-3.8-flash':'Older', 'gemini-4-pro':'Newer'}};
 const metadata = [{{model_id:'image-understanding', モダリティ:'text+image->text'}}, {{model_id:'image-output', モダリティ:'text->image'}}];
 console.log(JSON.stringify(hermesModelsInfo({{chatModels:{{gemini_chat:{{models}}}}, providerInfos:[{{プロバイダ:'gemini', chat:{{モデル:metadata}}}}]}})));'''
-        result = subprocess.run(["node", "--input-type=module", "-e", script], capture_output=True, text=True, check=True)
-        self.path.write_text(result.stdout)
+        result = subprocess.run(["node", "--input-type=module", "-e", script], capture_output=True, encoding="utf-8", check=True)
+        self.path.write_text(result.stdout, encoding="utf-8")
         rows = self.picker._get_aidiy_provider_entry("gemini", True)["models"]
         self.assertEqual(rows, [("Vision", "image-understanding"), ("Older", "gemini-3.8-flash"), ("Newer", "gemini-4-pro")])
 
     def test_custom_runtime_does_not_replace_explicit_google_keys_from_pool(self):
-        tree = ast.parse((ROOT / "hermes_cli/runtime_provider.py").read_text())
+        tree = ast.parse((ROOT / "hermes_cli/runtime_provider.py").read_text(encoding="utf-8"))
         node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_resolve_named_custom_runtime")
         pool_calls = []
         def pool(*args):
@@ -415,13 +415,13 @@ console.log(JSON.stringify(hermesModelsInfo({{chatModels:{{gemini_chat:{{models}
         self.assertEqual(calls[0]["provider"], "openrouter")
         self.assertEqual(calls[0]["model"], "vendor/model:free")
         self.assertEqual(calls[0]["api_key"], "fake-openrt_key_id")
-        self.ns["_AIDIY_KEY_JSON"].write_text("{}")
+        self.ns["_AIDIY_KEY_JSON"].write_text("{}", encoding="utf-8")
         code, calls = self.run_entry("openrt_free", "vendor/model:free")
         self.assertEqual(code, 0)
         self.assertEqual(calls[0]["provider"], "openrouter")
         self.assertIsNone(calls[0]["api_key"], "通常OpenRouterの環境/設定キー解決へ渡す")
         for filename in ["core/chat_completion_helpers.py", "hermes_cli/cli_agent_setup_mixin.py"]:
-            self.assertNotIn("openrt_free", (ROOT / filename).read_text())
+            self.assertNotIn("openrt_free", (ROOT / filename).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

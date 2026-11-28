@@ -16,10 +16,10 @@
   - `taskteam_main.py` : `8093`（AIタスク実行 + 定期タスク + 複数AIエージェントのチーム活動）
 - Web フロントは `frontend_web`、ポート `8090`
 - Avatar フロントは `frontend_avatar`、ポート `8092`
-- VS Code 拡張は `frontend_ide/host`。AiDiy (Code) はオンライン時に Core（`8091`）の AIコアへ接続して各 Code CLI を選び、未接続時は `aidiy_hermes` を直接起動する。AiDiy (Live) は同じ AIコアへ接続する。どちらも常駐ポートなし（単独起動版は `aidiy_code` / `aidiy_live`）
-- Discord Bot は `frontend_channels/discord`（任意起動、待受ポートなし）。専用テキストチャンネルを `aidiy_hermes`、専用ボイスチャンネルを Core（`8091`）の AIコア Live へ接続する。起動は `aidiy_discord`
-- Slack Bot は `frontend_channels/slack`。HTTPS の定期取得で専用チャンネルの投稿を Hermes へ渡し、スレッドへ返信する（音声なし）。起動は `aidiy_slack`
-- Navi / Term / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面は `frontend_ide/src/`
+- VS Code 拡張は `frontend_ide/host`。AiDiy (Code) はオンライン時に Core（`8091`）の AIコアへ接続して各 Code CLI を選び、未接続時は `aidiy_hermes` / `aidiy_pi` を選んで直接起動する。AiDiy (Live) は同じ AIコアへ接続する。どちらも常駐ポートなし（単独起動版は `aidiy_code` / `aidiy_live`）
+- Discord Bot は `frontend_channels/discord`（任意起動、待受ポートなし）。専用テキストチャンネルを `aidiy_hermes` / `aidiy_pi`、専用ボイスチャンネルを Core（`8091`）の AIコア Live へ接続する。起動は `aidiy_discord`
+- Slack Bot は `frontend_channels/slack`。HTTPS の定期取得で専用チャンネルの投稿を Hermes / Pi へ渡し、スレッドへ返信する（音声なし）。起動は `aidiy_slack`
+- IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面は `frontend_ide/src/`、Git パネルは `frontend_ide/aidiy_git/`
 - Diag は `frontend_diag`。環境診断に加え、設定・導入操作とサービス起動管理を提供する
 - DB は **SQLite**
   - `~/.aidiy/datas/`（`core_v20261101.db`、`apps_v20261101.db`、`diary_v20261128.db`）
@@ -43,6 +43,8 @@ AiDiy2027/
 ├── frontend_diag/              # 診断・設定・起動管理と Vue / Electron 画面
 ├── backend_local/             # ローカル Gemma 推論
 ├── command_hermes/            # aidiy_hermes CLI
+├── command_pi/                # aidiy_pi CLI
+├── command_codex/             # aidiy_codex CLI のソース・コンパイル
 ├── backend_tools/
 │   ├── tools_main.py
 │   ├── tools_proc/
@@ -75,10 +77,11 @@ AiDiy2027/
 │   ├── src/
 │   ├── public/
 │   └── AGENTS.md
-├── frontend_ide/              # 8種類の単独アプリと共通 Vue 画面
+├── frontend_ide/              # Git を含む10種類の単独アプリ
 │   ├── src/
 │   ├── host/                 # Code / Live の拡張・通信・CLI基盤
 │   ├── viewer/               # ファイル API・Office 表示
+│   ├── aidiy_git/            # ローカル Git パネル
 │   ├── タスクチーム/        # Task / Team API中継
 │   ├── checks/
 │   └── AGENTS.md
@@ -99,7 +102,7 @@ AiDiy2027/
 python _setup.py
 ```
 
-通常セットアップでは Diag を必ず準備します。IDE群を選ぶと、Navi / Term / Code / Live / IDE / Task / Team / Browser の共通依存・ランチャーを準備し、VS Code CLI がある場合は Code / Live の VSIX を生成・配置します。Channels (Discord / Slack) を選ぶと両 Bot の依存・パネル・ランチャーを準備します。
+通常セットアップでは Diag を必ず準備します。IDE群を選ぶと、IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU の依存・ランチャーを準備し、VS Code CLI がある場合は Code / Live の VSIX を生成・配置します。Channels (Discord / Slack) を選ぶと両 Bot の依存・パネル・ランチャーを準備します。
 
 依存更新、MCP 設定、モデルダウンロードなどの選択と注意点は [ルート README のセットアップ](../../README.md#1-セットアップ) を参照してください。接続情報は [Discord README](../../frontend_channels/discord/README.md) と [Slack README](../../frontend_channels/slack/README.md) にまとめています。
 
@@ -109,9 +112,9 @@ python _setup.py
 python _start.py
 ```
 
-最初の Diag 選択は既定 Yes です。Yes では `aidiy_diag --auto` へ起動管理を渡し、保存済みの設定で起動します。No ではバックエンド、Web / Avatar、Task / Team、Term / Code / Live / IDE、Discord / Slack を個別選択します。
+最初の Diag 選択は既定 Yes です。Yes では `aidiy_diag --auto` へ起動管理を渡し、保存済みの設定で起動します。No ではバックエンド、Web / Avatar、IDE / Term / Code / Live / Task / Team / CPU、Discord / Slack を個別選択します。Browser / Navi / Git はランチャーなどから手動で起動します。
 
-個別起動コマンド、OS ごとの Python パス、停止対象は [ルート README の起動](../../README.md#2-起動) と [停止](../../README.md#3-停止) を参照してください。常駐バックエンド以外の起動入口は `aidiy_navi` / `aidiy_term` / `aidiy_code` / `aidiy_live` / `aidiy_ide` / `aidiy_task` / `aidiy_team` / `aidiy_browser` / `aidiy_avatar` / `aidiy_discord` / `aidiy_slack` です。
+個別起動コマンド、OS ごとの Python パス、停止対象は [ルート README の起動](../../README.md#2-起動) と [停止](../../README.md#3-停止) を参照してください。IDE 群の単独起動コマンドは [IDE の起動手順](../../frontend_ide/README.md#起動) を参照してください。
 
 ---
 
@@ -124,7 +127,7 @@ python _start.py
 | Apps API Docs | http://127.0.0.1:8098/docs |
 | Task / Team API Docs | http://127.0.0.1:8093/docs |
 | Local API Docs | http://127.0.0.1:8096/docs |
-| Backend MCP 一覧（Windows 20 / Linux・macOS 19） | http://127.0.0.1:8095/ |
+| Backend MCP 一覧（Windows 21 / Linux・macOS 20） | http://127.0.0.1:8095/ |
 | Backend MCP ツール一覧 | http://127.0.0.1:8095/{mcp_name}/list |
 | Backend MCP SSE 接続 | http://127.0.0.1:8095/{mcp_name}/sse （例: `aidiy_chrome_devtools`） |
 | Avatar Web モード | http://127.0.0.1:8092 |
@@ -146,7 +149,7 @@ python _start.py
 - `core_router/`
   - 認証、C系と対応するV系（V権限・V利用者・V採番）、A系、files、AIコア
 - `apps_router/`
-  - M系、T系、V系、S系
+  - M系、T系、V系、S系。`T日誌` は Apps の専用日誌 DB を使用する。[日誌のバックエンド構成](../../backend_server/AGENTS.md#t系-transaction)
 - `core_models/`, `apps_models/`
   - SQLAlchemy モデル
 - `core_schema/`, `apps_schema/`
@@ -173,7 +176,7 @@ python _start.py
 - AI 画面ルート: `/AiDiy`
 - AIタスク / AIチーム: Web / Avatar 内ではなく `aidiy_task` / `aidiy_team` の単独画面。`frontend_ide/タスクチーム/api-proxy.mjs` が `/taskteam-api` を 8093 の `/task/*` / `/team/*` へ中継
 - Vite proxy: `/core`→8091、`/apps`→8098、`/mcp`→8095。`/task`・`/team` の proxy は設けない（`frontend_web/vite.config.ts`）
-- 一覧画面は `qTublerFrame` ベース
+- 一覧画面は主に `qTublerFrame` ベース。日誌のルートと API は [Web の日誌](../../frontend_web/AGENTS.md#日誌) を参照
 
 主要カテゴリ:
 
@@ -209,23 +212,23 @@ python _start.py
 AiDiy (Code) と AiDiy (Live) の 2 つの独立した拡張と、同じ画面を使う単独起動版（`aidiy_code` / `aidiy_live`）で構成します。
 
 - Code 拡張エントリと会話状態: `frontend_ide/host/src/extension.ts`
-- Hermes CLI の解決・起動・停止: `frontend_ide/host/src/runner.ts`
+- Hermes / Pi の解決・起動・停止: `frontend_ide/host/src/runner.ts`
 - AIコード互換 packet: `frontend_ide/host/src/protocol.ts`
 - 共通 Vue 画面: `frontend_ide/src/`。拡張の画面読込は `frontend_ide/host/src/extension.ts` と `frontend_ide/host/aidiy_live/src/extension.ts`
-- Code 単独起動: `frontend_ide/host/aidiy_code/`（`launch.mjs`, `desktop.cjs`, `src/server.ts`, `bridge.js`）
-- Live 拡張・単独起動: `frontend_ide/host/aidiy_live/`（`src/extension.ts`, `src/host.ts`, `src/view.ts`, `src/server.ts`, `launch.mjs`）
+- Code / Live 単独起動: `frontend_ide/launch.mjs` / `desktop.cjs`。各 `host/aidiy_code/launch.mjs` / `host/aidiy_live/launch.mjs` は共通起動へ委譲
+- 単独版の通信: `frontend_ide/host/aidiy_code/src/server.ts` / `frontend_ide/host/aidiy_live/src/server.ts`。Live 拡張の入口は `frontend_ide/host/aidiy_live/src/extension.ts`
 
-Code はオンライン時に `frontend_ide/host/src/code-connection.ts` から AIコア WebSocket へ接続し、未接続時は `aidiy_hermes` を直接実行します。Live は `backend_server`（8091）の AIコア WebSocket とモデル情報 API へ接続し、音声・文字のライブ会話を行います。詳細は [frontend_ide/host/AGENTS.md](../../frontend_ide/host/AGENTS.md) を参照してください。
+Code はオンライン時に `frontend_ide/host/src/code-connection.ts` から AIコア WebSocket へ接続し、未接続時は `aidiy_hermes` / `aidiy_pi` を選んで直接実行します。Live は `backend_server`（8091）の AIコア WebSocket とモデル情報 API へ接続し、音声・文字のライブ会話を行います。詳細は [frontend_ide/host/AGENTS.md](../../frontend_ide/host/AGENTS.md) を参照してください。
 
 `frontend_channels/discord` は Discord Bot から同じ Code / Live を使う任意起動のクライアントです。`frontend_ide/host` の `src/runner.ts`、`src/protocol.ts`、`aidiy_live/src/protocol.ts`、`src/model-preferences.ts` を `frontend_channels/discord/src/共通連携/IDE連携.ts` 経由で直接共有するため、これらを変更すると Discord 側にも影響します。
 
 - 起動・設定確認: `frontend_channels/discord/src/main.ts`
 - 接続パネル: `frontend_channels/discord/panel/`、`src/接続パネル/パネル操作.ts`、`src/接続パネル/パネル中継.ts`、`src/panel-worker.ts`（Electron 版）、`src/web-server.ts`（ブラウザ版）
 - Discord イベント・返信: `frontend_channels/discord/src/接続/Bot接続.ts`、`src/接続/コマンド処理.ts`
-- Code（Hermes 会話継続）: `frontend_channels/discord/src/コード/コード会話.ts`
+- Code（Hermes / Pi の会話継続）: `frontend_channels/discord/src/コード/コード会話.ts`
 - Live（ボイスチャンネルと AIコアの中継）: `frontend_channels/discord/src/ライブ/ライブ会話.ts`、`src/ライブ/音声処理.ts`
 
-Discord の接続情報は `_config/AiDiy_key.json` の小文字 `discord_*` 5項目で、Live・作業フォルダ・Hermes モデルは共通設定を使います。詳細は [frontend_channels/discord/AGENTS.md](../../frontend_channels/discord/AGENTS.md) を参照してください。
+Discord の接続情報は `_config/AiDiy_key.json` の小文字 `discord_*` 5項目で、Live・作業フォルダ・モデルの既定値には共通設定を使います。詳細は [frontend_channels/discord/AGENTS.md](../../frontend_channels/discord/AGENTS.md) を参照してください。
 
 ---
 

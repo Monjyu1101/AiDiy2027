@@ -2,7 +2,7 @@
 
 `copilot_cli/same` のような外部CLIモデルを選ぶと、外部CLIに依頼全体を渡すパススルーで動作する。外部CLIの認証・ファイル操作・ツール実行は子CLI側が担当する。親が子を推論専用のチャットエンジンとして扱う機能と、方式を切り替える起動オプションは廃止した。通常のAPI / OAuthモデルの動作は変わらない。
 
-対象は `claude_cli`、`antigravity_cli`、`codex_cli`、`copilot_cli`、`opencode_cli`、`grok_cli`。`same` は子のモデル指定を省略し、`openai/gpt-6-luna` のような階層付きモデルIDは保持する。`codex_cli` は通常の `codex` を起動し、`aidiy_codex` には委譲しない。
+対象は `claude_cli`、`antigravity_cli`、`agy_cli`、`codex_cli`、`copilot_cli`、`opencode_cli`、`grok_cli`。`same` は子のモデル指定を省略し、`openai/gpt-6-luna` のような階層付きモデルIDは保持する。`codex_cli` は通常の `codex` を起動し、`aidiy_codex` には委譲しない。
 
 ## 共通の実行経路
 

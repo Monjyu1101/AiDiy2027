@@ -11,7 +11,7 @@
 -->
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '../../../api/client';
 import { qConfirm, qMessage } from '../../../utils/qAlert';
@@ -36,6 +36,7 @@ const URL戻り先 = computed(() => {
 const mode = ref('edit');
 const activeTab = ref('content');
 const detailData = ref(null);
+const 読込中 = ref(true);
 const message = ref('');
 const messageType = ref('success');
 
@@ -213,10 +214,11 @@ const loadMasterData = async () => {
 // ==================================================
 // 詳細データ取得
 // ==================================================
-const loadDetail = async (id) => {
+const loadDetail = async (id, 現在の要求: () => boolean) => {
   message.value = '';
   try {
     const res = await apiClient.post('/apps/T配車/取得', { 配車伝票ID: String(id) });
+    if (!現在の要求()) return;
     if (res.data.status === 'OK' && res.data.data) {
       detailData.value = res.data.data;
       applyDataToForm(res.data.data);
@@ -224,7 +226,7 @@ const loadDetail = async (id) => {
       showMessage(res.data.message || '配車情報の取得に失敗しました。', 'error');
     }
   } catch (e) {
-    showMessage('配車情報の取得でエラーが発生しました。', 'error');
+    if (現在の要求()) showMessage('配車情報の取得でエラーが発生しました。', 'error');
   }
 };
 
@@ -238,7 +240,7 @@ const formatLocalDate = (date) => {
   return `${y}-${m}-${d}`;
 };
 
-const applyQueryParams = async (query: any) => {
+const applyQueryParams = async (query: any, 現在の要求: () => boolean) => {
   message.value = '';
   resetValidation();
   activeTab.value = 'content';
@@ -275,13 +277,13 @@ const applyQueryParams = async (query: any) => {
 
   if (query.モード === '表示' && query.配車伝票ID) {
     mode.value = 'view';
-    await loadDetail(query.配車伝票ID);
+    await loadDetail(query.配車伝票ID, 現在の要求);
     return;
   }
 
   if (query.配車伝票ID) {
     mode.value = 'edit';
-    await loadDetail(query.配車伝票ID);
+    await loadDetail(query.配車伝票ID, 現在の要求);
     return;
   }
 
@@ -398,14 +400,19 @@ const deleteData = async () => {
 // ==================================================
 // 初期化
 // ==================================================
-onMounted(async () => {
-  await loadMasterData();
-  await applyQueryParams(route.query);
-});
-
-watch(() => route.query, async (query) => {
-  await applyQueryParams(query);
-});
+const マスタ読込 = loadMasterData();
+watch(() => route.query, async (query, _, onCleanup) => {
+  let 有効 = true;
+  onCleanup(() => { 有効 = false; });
+  読込中.value = true;
+  detailData.value = null;
+  try {
+    await マスタ読込;
+    if (有効) await applyQueryParams(query, () => 有効);
+  } finally {
+    if (有効) 読込中.value = false;
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -424,7 +431,8 @@ watch(() => route.query, async (query) => {
           <button class="btn btn-secondary" @click="backToList">一覧に戻る</button>
         </div>
 
-        <form class="detail-form" @submit.prevent="saveData">
+        <p v-if="読込中" role="status">配車情報を読み込み中…</p>
+        <form v-else-if="isCreateMode || detailData" class="detail-form" @submit.prevent="saveData">
           <div class="tab-header">
             <button
               type="button"

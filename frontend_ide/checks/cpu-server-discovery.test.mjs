@@ -140,7 +140,7 @@ async function runWindowsFixture(rows,{failProcess=false,failListen=false,missin
 function Get-CimInstance {
  param($ClassName,$Filter,$Property,$OperationTimeoutSec)
  if($ClassName -ne 'Win32_Process' -or $Filter -ne "Name='node.exe'" -or $OperationTimeoutSec -ne 3){throw 'wrong scope'}
- ${failProcess?"throw 'secret process data'":`ConvertFrom-Json -InputObject ${quote(JSON.stringify(rows))}`}
+ ${failProcess?"throw 'secret process data'":`foreach($row in (ConvertFrom-Json -InputObject ${quote(JSON.stringify(rows))})){ $row }`}
 }
 function Get-NetTCPConnection {
  param($State,$LocalAddress,$OwningProcess,$ErrorAction)
@@ -148,7 +148,7 @@ function Get-NetTCPConnection {
  if(@(${missingPids.join(',')}) -contains $OwningProcess){Write-Error 'no listener for this PID' -Category ObjectNotFound;return}
  if(@(${failedPids.join(',')}) -contains $OwningProcess){throw 'secret listener data'}
  ${failListen?"throw 'secret listener data'":`foreach($owner in $OwningProcess){[PSCustomObject]@{LocalAddress='127.0.0.1';State='Listen';OwningProcess=$owner;LocalPort=(25000+[int]$owner)}}
- ConvertFrom-Json -InputObject ${quote(JSON.stringify(extraListeners))}`}
+ foreach($listener in (ConvertFrom-Json -InputObject ${quote(JSON.stringify(extraListeners))})){ $listener }`}
 }
 ${windowsServerDiscoveryCommand(targetPath)}`;
  const encoded=Buffer.from(script,'utf16le').toString('base64');assert.ok(encoded.length<32000,'Windows command length');

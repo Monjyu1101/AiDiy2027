@@ -117,7 +117,7 @@ print(res.json())  # {"save_path": "..."}
 | `aidiy_notification_sounds` | 通知音のローカル再生（scene 別の開始 / 終了 / 注意音、`tts` シーンは読み上げ合成） | `http://127.0.0.1:8095/aidiy_notification_sounds/sse` |
 | `aidiy_code_agents` | AI コードエージェント実行（CodeAI CLI 経由） | `http://127.0.0.1:8095/aidiy_code_agents/sse` |
 | `aidiy_chat_llms` | AIチャット の ChatAI を MCP 化。OpenAI / Ollama 互換の `aidiy_chat_completions`（HTTP のみ）の実体 | `http://127.0.0.1:8095/aidiy_chat_llms/sse` |
-| `aidiy_decisions_check` | AI判断（Decisions API / OAuth Responses JSON Schema） | `http://127.0.0.1:8095/aidiy_decisions_check/sse` |
+| `aidiy_decisions_check` | AI判断（OpenAI、FreeAI、Gemini API、Google ログイン経由の AGY） | `http://127.0.0.1:8095/aidiy_decisions_check/sse` |
 | `aidiy_task_agents` | backend_taskteam の Task API への AIタスク非同期投入、要求/明細状態取得 | `http://127.0.0.1:8095/aidiy_task_agents/sse` |
 | `aidiy_team_agents` | backend_taskteam の Team API への AIチーム依頼投入、依頼/要員状態取得 | `http://127.0.0.1:8095/aidiy_team_agents/sse` |
 | `aidiy_dialy_control` | 利用者ID指定の日誌検索と作業・明細の登録 / 変更 / 削除 | `http://127.0.0.1:8095/aidiy_dialy_control/sse` |
@@ -159,7 +159,9 @@ Linux / macOS では `aidiy_windows_control` の import、MCP 登録、REST ル�
 - 1ターンは同一セッション・チャンネルのユーザー入力と、次の入力までの返答群。明確なCode/ch0ミラーを整理してから、ユーザー入力が新しい順に最大10ターンを選ぶ。最新の未返信入力も含め、期間外入力に対する返答だけではターンを作らない。期間内の別セッション・チャンネルの返答は混ぜない。
 - 推論へはユーザー依頼を `turn_id` 順に `""" ユーザー依頼01` … の番号付きブロックで渡し、最後に `""" 次のユーザー依頼` / `？？？　⇦　ここを予測して` のブロックを置く。残りの文字数予算で、選択依頼に対応する最新の有効なAI最終応答1件だけを追加する。本文の `"""` は `”””` に置き換える。予測指示では、ユーザー要求の流れを推察して次の回答（ユーザーの次の入力）を予測させ、入力の流れや繰り返しの対応関係から推定するよう、例（A→B→A′ なら B′、A→B→C→A′ でも B′、A→B に流れがあり C なら D）を示す。CLI方式も毎回新しいセッションで実行し、前回の予測や通常の会話を引き継がない。Chat は `AI実行オプション.単発()`、CLI は `読取専用予測()`（会話継続・履歴保存・ストリーム送信・出力ファイル保存を無効、CLI読取専用を有効）を渡す（[共通パラメータ](./backend_server,backend_tools,AIチャット・AIコード共通パラメータ.md)）。DBのセッションIDはモデルに渡さない。本文合計24,000文字・1件4,000文字の安全上限は維持し、ユーザー入力を先に予算へ割り当て、残りで最新の有効なAI最終応答1件を追加する。文字数上限により10ターン未満になることはある。
 - 他プロジェクト・所属不明・2時間より古い履歴へフォールバックしない。対象のユーザー入力がなければ `status: "NG"` を返し、モデルは呼ばない。`history_count` は採用したユーザー入力数で、追加したAI最終応答は数えない。
-- 通常の Chat 設定ではなく `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OPENAI_OAUTH_MODEL` / `PREDICTION_GEMINI_AGY_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL`（初期値は方式とChat系が `auto`、CLI系が `gpt-6-luna` / Hermesは `openai_oauth/gpt-6-luna`）を使う。明示引数を優先し、引数がautoのときだけ設定値を使う。方式設定もautoなら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。CLI方式（`codex_cli` / `copilot_cli` / `aidiy_hermes`）はautoで最優先に選ばれ、指定プロジェクトを作業フォルダにして、CLI読取専用・権限none・継続なしの1回だけ実行する。正常応答の先頭に `[[PREDICTION]]` を付けさせ、目印がない応答は実行エラーとして扱う。CLI自身のセッション履歴はCLI側に残る場合がある。モデルは決定した方式のキーを使い、それもautoなら選んだ方式の先頭候補を使い、候補外モデルには切り替えない。
+- 次の入力の予測には `PREDICTION_AI_NAME` と方式別モデルを使います。明示引数を優先し、`auto` の引数は設定を使います。[設定キーと初期値](<./backend_server,設定管理(conf).md#default_config-のキー構成>)
+- 方式設定も `auto` なら、Diag の `prediction_models_info.json` に候補がある方式を `codex_cli` → `copilot_cli` → `aidiy_hermes` → `aidiy_pi` → `aidiy_codex` → `openai_oauth` → `gemini_agy` → `freeai_chat` → `gemini_chat` → `openai_chat` の順で選びます。`gemini_agy` は実行ファイルを検出でき、対応モデルが候補にある場合に自動選択できます。モデルも `auto` なら選んだ方式の先頭候補を使います。
+- 5つの CLI 方式は指定プロジェクトで読み取り専用・権限 `none`・継続なしの1回だけ実行します。正常応答の先頭には `[[PREDICTION]]` を要求します。CLI 自身のセッション履歴が残る場合があります。
 - Diagは判断用と同じ認証済み低コスト候補から生成し、OpenAI API区分だけ `openai_decisions` から `openai_chat` に置き換える。予測JSONに `openai_decisions` は含めない。判断側の候補区分・選択順・実行処理は変更しない。
 - 起動時のモデル実行チェックは行わず、実行時に設定・認証を確認する。DBは読み取り専用で、会話本文・予測文をDB・ログ・セッションへ保存せず、モデルによる変更・副作用ツールを制限する。CLIごとの読取専用境界とCLI自身の保存は [運用手順](./backend_tools,backend_server,運用手順.md) を参照する。MCPツールとしては登録しない。設定はWeb / AvatarのAI設定画面で変更し、Diagの明示試行と、利用者がONにしたCode画面の予測（入力欄の「検証」の左のトグル）から内部RESTを呼び出す。
 - 戻り値は `status`、`result`（予測文または安全な説明）、`ai_name`、`ai_model`、`project_path`、`history_count`。ラッパー内部の予期しない失敗は `status` / `result` の安全な説明のみを返す。

@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import {installGitChrome} from './panel-chrome.js';
+import {diffRows} from './diff-lines.js';
 import {installGitHubTabs} from './github-tabs.js';
 const $=id=>document.getElementById(id);
 const token=document.querySelector('meta[name=aidiy-git]').content,session=document.querySelector('meta[name=aidiy-session]').content;
@@ -88,7 +89,8 @@ async function renderReview(){
    const value=await request('diff',selected);if(generation!==reviewGeneration)return;
    if(!value.diff){$('diff').textContent='表示できる差分はありません。';return;}
    const lines=value.diff.split('\n'),max=6000;
-   $('diff').replaceChildren(...lines.slice(0,max).map(line=>make('span',line,'line '+(line.startsWith('@@')?'chunk':line.startsWith('+')&&!line.startsWith('+++')?'added':line.startsWith('-')&&!line.startsWith('---')?'removed':''))));
+   const rows=diffRows(lines.slice(0,max));
+   $('diff').replaceChildren(...rows.map(({text,kind})=>make('span',text,kind?'line '+kind:'line')));
    if(lines.length>max)$('diff').append(make('span','表示は先頭6,000行までです。','line'));
   }
  }catch(error){if(generation!==reviewGeneration)return;if(view==='diff')$('diff').textContent=error.message;else $('history').replaceChildren(make('li',error.message));}

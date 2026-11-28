@@ -24,6 +24,8 @@ args = sys.argv[1:]
 if "--version" in args:
     print("agy fixture")
     raise SystemExit(0)
+# AGY の標準入力は UTF-8。模擬 CLI も Windows の既定コードページに依存させない。
+sys.stdin.reconfigure(encoding="utf-8")
 event = json.loads(sys.stdin.readline())
 assert not sys.stdin.read()
 if event["message"]["content"].find("接続失敗") >= 0:

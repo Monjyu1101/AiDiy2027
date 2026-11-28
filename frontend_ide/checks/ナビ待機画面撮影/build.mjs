@@ -1,4 +1,4 @@
-// ナビ待機画面（9種）を単体表示する撮影用バンドルを temp/ナビ待機画面撮影/dist へ作る。製品の dist は変更しない。
+// ナビ待機画面を単体表示する撮影用バンドルを temp/ナビ待機画面撮影/dist へ作る。製品の dist は変更しない。
 // 実行: node frontend_ide/checks/ナビ待機画面撮影/build.mjs
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import {join} from 'node:path';

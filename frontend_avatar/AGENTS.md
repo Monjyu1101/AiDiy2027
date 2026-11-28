@@ -56,6 +56,9 @@ Electron 版は BrowserWindow の role を main process で管理します。
 | `electron/dev-start.cjs` | `npm run dev` の Vite・TypeScript 監視・Electron 起動 |
 | `electron/main.ts` | BrowserWindow、IPC、パネル制御 |
 | `electron/preload.ts` | renderer へ `desktopApi` を公開 |
+| `electron/IDE窓配置.cjs` | 親プロセス専用の窓配置スナップショットの検証・復元（core / chat / file / image / code1〜code6） |
+| `electron/alone-transport.ts` | 単独起動時の内部認証。`frontend_ide/host/src/internal-auth.ts` と同じ境界で、秘密を renderer に渡さず要求ごとに読み直す |
+| `electron/dev-filter.cjs` | 開発時の electronmon 出力から WebRTC / WGC のノイズログを除き、Electron 終了時に electronmon も止める |
 | `src/AiDiy.vue` | 認証、接続、role / panel 状態、Web layout の中心 |
 | `src/main.ts` | renderer 初期化 |
 | `src/api/client.ts` | REST API client（`apiClient` = core） |

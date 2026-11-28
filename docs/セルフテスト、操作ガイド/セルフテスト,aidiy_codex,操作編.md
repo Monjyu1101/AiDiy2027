@@ -58,6 +58,8 @@ DiagからCodexが起動し、入力待ちになりました。
 
 選択画面で候補8件と現在の `GPT-6-Astra` を確認し、Escで閉じました。モデルは変更していません。
 
+AiDiyのモデルは接続区分とモデル名の組で選びます。OpenAIではAPIキーとOAuthが別区分です。推論の強さを選ぶ画面が出る場合は、そのモデルが提示する候補から選びます。通常の Antigravity CLI は `antigravity_cli`、保存済みの Google ログインを使う Agy は `agy_cli` です。 [AGYの導入とモデル一覧の更新](../../_AIDIY/knowledge/backend_server,AGY-Googleログイン運用.md)
+
 **図203：モデル選択**
 
 ![図203 モデル選択](images/セルフテスト,aidiy_codex,操作編/Codex_203_モデル選択.png)

@@ -68,11 +68,11 @@ AIタスク・AIチームは `aidiy_task` / `aidiy_team` の単独アプリへ�
 ### beforeEach — 認証チェック
 
 ```typescript
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   try {
     const decodedPath = decodeURIComponent(to.path)
     if (decodedPath !== to.path) {
-      return next({ path: decodedPath, query: to.query, hash: to.hash })
+      return { path: decodedPath, query: to.query, hash: to.hash }
     }
   } catch (e) {
     console.error('URL Decode Error:', e)
@@ -80,16 +80,15 @@ router.beforeEach(async (to, _from, next) => {
 
   const authStore = useAuthStore()
   if (to.meta.requiresAuth) {
-    if (!authStore.token) return next('/ログイン')
+    if (!authStore.token) return '/ログイン'
     if (authStore.user) {
       // キャッシュ済み利用者がいれば遷移を止めず、裏で認証確認する
       void authStore.ensureAuth()
     } else {
       await authStore.ensureAuth()
-      if (!authStore.user) return next('/ログイン')
+      if (!authStore.user) return '/ログイン'
     }
   }
-  next()
 })
 ```
 

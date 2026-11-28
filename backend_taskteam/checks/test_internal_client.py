@@ -84,7 +84,7 @@ class ConsumerTests(unittest.TestCase):
             read.assert_not_called()
             send.assert_not_called()
 
-    def test_missing_malformed_symlink_fail_closed(self):
+    def test_missing_and_malformed_token_fail_closed(self):
         for data in ('{malformed-secret', '{}', '[]', '{"token_type":"bearer","access_token":"injected\\nheader"}'):
             self.file.write_text(data)
             with patch.object(client._HTTP, 'open') as send, self.assertRaises(RuntimeError) as caught:
@@ -94,8 +94,26 @@ class ConsumerTests(unittest.TestCase):
         self.file.unlink()
         with self.assertRaises(RuntimeError):
             client._read_token()
-        target = self.file.with_name('target.json'); target.write_text('{}')
-        self.file.symlink_to(target)
+
+    def test_detected_symlink_rejected_before_read(self):
+        for linked in (self.file, self.file.parent, self.file.parent.parent):
+            with (
+                self.subTest(linked=linked),
+                patch.object(Path, 'is_symlink', autospec=True, side_effect=lambda path: path == linked),
+                patch.object(Path, 'read_text') as read,
+            ):
+                with self.assertRaises(RuntimeError):
+                    client._read_token()
+                read.assert_not_called()
+
+    def test_native_symlink_to_valid_token_is_rejected(self):
+        target = self.file.rename(self.file.with_name('target.json'))
+        try:
+            self.file.symlink_to(target)
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('このWindows環境にはシンボリックリンクの作成権限がありません')
+            raise
         with self.assertRaises(RuntimeError):
             client._read_token()
 

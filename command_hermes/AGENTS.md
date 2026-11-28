@@ -83,6 +83,7 @@ upstream のレイアウトを次の 3 点だけ読み替えています。
 |------|------|
 | `cli_main.py` | CLI エントリ、TUI、slash command、AiDiy provider/model ピッカー |
 | `hermes_main.py` | `hermes auth` / `hermes model` などの管理サブコマンド入口 |
+| `prediction_main.py` | 次入力予測だけの読み取り専用入口（`AIコード_cli.py` の予測・Navi から使用。通常の `cli_main.py` / upstream は変更しない） |
 | `core/` | upstream `agent/`。agent loop、prompt、display、retry、adapter |
 | `base/` | upstream ルートモジュール。`utils`、`toolsets`、`run_agent`、`hermes_constants` など |
 | `hermes_cli/` | slash command、CLI mixin、設定、認証、TUI 補助 |

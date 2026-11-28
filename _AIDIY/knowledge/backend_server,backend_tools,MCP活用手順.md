@@ -10,7 +10,7 @@
 ## 関連ファイル
 - `_config/AiDiy_mcp.json` — Claude Agent SDK に渡す MCP 接続定義
 - `backend_server/AIコア/AIコード_claude.py` — Claude Agent SDK で MCP を使う処理
-- `backend_tools/tools_main.py` — Windows は20個、Linux / macOS は19個の MCP サーバー入口
+- `backend_tools/tools_main.py` — Windows は21個、Linux / macOS は20個の MCP サーバー入口
 - `backend_tools/mcp_stdio.py` — SSE を stdio client へ中継
 - `backend_tools/tools_proc/` — 各 MCP のロジック
 
@@ -69,6 +69,7 @@ Toolsが起動中のときは、作業の経緯や判断理由も要点を短く
 | 複数 Chrome でのシステムテスト自動実行・並行実行 | `aidiy_chrome_devtools`（`session` 指定。終了後 `close_session`） |
 | Electron やブラウザ外を含む画面確認 | `aidiy_desktop_capture` |
 | AiDiy SQLite のテーブル、件数、監査項目確認 | `aidiy_sqlite` |
+| T日誌の検索、作業・明細の登録 / 変更 / 削除 | `aidiy_dialy_control`（[T日誌の操作](./backend_tools,構成.md#t日誌の操作)） |
 | 外部 PostgreSQL のスキーマ、件数確認 | `aidiy_postgres` |
 | サーバーログや Traceback 確認 | `aidiy_logs` |
 | Python 構文、ruff、TypeScript 型チェック | `aidiy_code_check` |

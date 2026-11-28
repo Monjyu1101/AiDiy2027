@@ -36,6 +36,8 @@ node frontend_ide/launch.mjs --app code --browser --project "C:\Users\admin\Desk
 
 単独Electronで接続済み・プロジェクト名・入力欄を確認しました。検証回数は0回、予測はOFFです。
 
+入力予測はCodeを開いたときにOFFです。オンにして接続中に会話し、履歴がある状態で回答が完了すると、入力欄が空の場合に続きの候補を1回だけ試します。下書きがある場合や途中で入力を始めた場合は、入力内容を優先します。
+
 **図101：Code起動画面**
 
 ![図101 Code起動画面](images/セルフテスト,aidiy_code,操作編/Code_101_Code起動画面.png)

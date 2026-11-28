@@ -55,7 +55,11 @@ test('project layout round trips atomically, isolates projects and does not pers
 });
 test('layout storage rejects symlinked private folders and invalid/unbounded values',()=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-layout-')),other=mkdtempSync(join(tmpdir(),'aidiy-layout-other-'));
- try{symlinkSync(other,join(root,'_AIDIY'));assert.throws(()=>writeLayout(root,snapshot()),/リンク/);}finally{rmSync(root,{recursive:true,force:true});rmSync(other,{recursive:true,force:true});}
+ try{
+  // 権限なしでも作れる Windows のジャンクションでディレクトリリンクを検証する。
+  symlinkSync(other,join(root,'_AIDIY'),process.platform==='win32'?'junction':'dir');
+  assert.throws(()=>writeLayout(root,snapshot()),/リンク/);
+ }finally{rmSync(root,{recursive:true,force:true});rmSync(other,{recursive:true,force:true});}
  for(const value of [{}, {...snapshot(),version:2},{...snapshot(),panels:[{kind:'shell',bounds:rect}]},{...snapshot(),ide:{bounds:{...rect,width:Infinity}}},{...snapshot(),panels:Array(101).fill(snapshot().panels[0])}])assert.throws(()=>validate(value));
 });
 test('Save captures IDE and owned panels, omits unrelated applications and Task editor data',async()=>{

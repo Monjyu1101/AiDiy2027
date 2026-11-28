@@ -46,7 +46,7 @@
 | レイヤー | 例 |
 |----------|----|
 | Database | テーブル名 `C権限`、カラム名 `利用者ID` |
-| API | `/core/利用者/一覧`、`{"利用者名": "admin"}` |
+| API | `/core/C利用者/一覧`、`{"利用者名": "admin"}` |
 | Frontend | `C利用者一覧.vue`、`/C管理/C利用者/一覧` |
 
 ## サブシステムと詳細文書
@@ -65,18 +65,18 @@
 | `command_codex` | `aidiy_codex` CLI 基盤（Apache-2.0 の Codex を内包し、`_compile.py` でコンパイルして `~/.aidiy/bin` に配置） | 常駐なし | [AGENTS.md](./command_codex/AGENTS.md)、[変更点と最新版再移行要点](./command_codex/変更点と最新版再移行要点.md) |
 | `frontend_web` | 通常 Web UI（Vue 3 + Vite + TypeScript） | 8090 | [AGENTS.md](./frontend_web/AGENTS.md) |
 | `frontend_avatar` | Electron / Web デュアルモードの AI Avatar | 8092 | [AGENTS.md](./frontend_avatar/AGENTS.md) |
-| `frontend_ide` | IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面と単独起動 | 自動 | [AGENTS.md](./frontend_ide/AGENTS.md)、[host](./frontend_ide/host/AGENTS.md)（VS Code 拡張 Code / Live）、[viewer](./frontend_ide/viewer/AGENTS.md)（ファイルAPI・Office表示） |
+| `frontend_ide` | IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面、Git パネルと各単独起動 | 自動 | [AGENTS.md](./frontend_ide/AGENTS.md)、[host](./frontend_ide/host/AGENTS.md)（VS Code 拡張 Code / Live）、[viewer](./frontend_ide/viewer/AGENTS.md)（ファイルAPI・Office表示） |
 | `frontend_channels` | Discord（Hermes / Pi チャット・AIコア Live 音声）と Slack（双子、音声なし）の任意起動 Bot | 待受なし | [AGENTS.md](./frontend_channels/AGENTS.md)、[discord](./frontend_channels/discord/AGENTS.md)、[slack](./frontend_channels/slack/AGENTS.md) |
 
-Core / TaskTeam と Apps は別々の SQLite DB を使用し、日誌も含めて実行ユーザーの `~/.aidiy/datas/` に保存し、現行ファイル名は `scripts/業務DB.json` で管理します。frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振り分け、Task / Team の `/task/*`・`/team/*` は 8093 へ接続します。
+Core / TaskTeam と Apps は別々の SQLite DB を使用し、Apps の T日誌はさらに専用 DB に保存します。保存先は実行ユーザーの `~/.aidiy/datas/`、現行ファイル名の正本は `scripts/業務DB.json` です。frontend_web の Vite proxy は `/core/*` を 8091、`/apps/*` を 8098、`/mcp/*` を先頭の `/mcp` を除いて 8095 へ転送します。現行実装では Task / Team は Web・Avatar 内に画面やプロキシを持たず、frontend_ide の独立アプリから専用プロキシ経由で 8093 の `/task/*`・`/team/*` に接続します。
 
-その他のフォルダ：`_config/`（API キー・AI モデル・MCP などの共通設定）、`_icons/`（共通アイコン）、`docs/`（開発ガイド・セルフテスト）、`_AIDIY/knowledge/`（HowTo と再利用ナレッジ）、`scripts/`（補助スクリプト）、`docker/`（Docker + nginx 構成）。最小入口は [_AIDIY.md](./_AIDIY.md) と [CLAUDE.md](./CLAUDE.md)、人間向けの紹介資料は [X自己紹介](./frontend_web/public/X自己紹介/index.html) です。
+その他のフォルダ：`_config/`（API キー・AI モデル・MCP などの共通設定）、`_icons/`（共通アイコン）、`docs/`（開発ガイド・[セルフテストと操作ガイド](./docs/セルフテスト、操作ガイド/_index.md)）、`_AIDIY/knowledge/`（HowTo と再利用ナレッジ）、`scripts/`（補助スクリプト）、`docker/`（Docker + nginx 構成）。最小入口は [_AIDIY.md](./_AIDIY.md) と [CLAUDE.md](./CLAUDE.md)、人間向けの紹介資料は [X自己紹介](./frontend_web/public/X自己紹介/index.html) です。
 
 ## 業務システムの設計要点
 
 - テーブルは接頭辞で種別を分ける：`C`（Core / Common）、`M`（Master）、`T`（Transaction）、`V`（View endpoint）、`S`（Scheduler / Special）、`A`（AI / Advanced）、`X`（Experimental）。`V` 系は DB VIEW を作らず、Router の生 SQL で JOIN / 集計する。
 - API は POST 中心で、レスポンスは `status`・`message`・`data` の統一形式。Core は `/core/*`、Apps は `/apps/*`、認証は JWT。
-- DB は SQLite。Alembic は使わない。採番は `C採番` で管理し AUTOINCREMENT を前提にしない。全テーブルが登録 / 更新の監査フィールドを持つ。
-- ヘッダーと明細を単一テーブルで持つ明細型（`明細SEQ=0` がヘッダー）を使う。
+- DB は SQLite。Alembic は使わない。採番は `C採番` で管理し AUTOINCREMENT を前提にしない。登録 / 更新の監査情報を管理する。
+- `M商品構成`・`T生産` などでは、ヘッダーと明細を単一テーブルで持つ明細型（`明細SEQ=0` がヘッダー）を使う。T日誌は作業と明細の2テーブル構成。
 
 提供機能・業務サンプル・明細型の詳細とAIコアの設定キーは [backend_server/AGENTS.md](./backend_server/AGENTS.md)、スキーマ変更の手順は [`backend_server,スキーマ変更手順.md`](./_AIDIY/knowledge/backend_server,スキーマ変更手順.md) を参照してください。

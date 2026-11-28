@@ -93,6 +93,70 @@ class 日誌Tests(unittest.TestCase):
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual({r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}, {"T日誌作業", "T日誌明細"})
 
+    def post_apps(self, path, body):
+        response = self.client.post(
+            "/apps/" + path, json=body, headers={"Authorization": "Bearer " + self.tokens["one"]},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        result = response.json()
+        self.assertEqual(result["status"], "OK", result)
+        return result["data"]
+
+    def test_業務DBを分離しても配車と生産の予定を移動して読み直せる(self):
+        from core_crud.C採番 import init_C採番_data
+        with database.SessionLocal() as db:
+            init_C採番_data(db)
+        for kind, resource, fields in [
+            ("配車", "車両ID", {}),
+            ("生産", "生産工程ID", {"受入商品ID": "ITEM", "最小ロット数量": 1}),
+        ]:
+            with self.subTest(予定=kind):
+                id_key = kind + "伝票ID"
+                item = self.post_apps(f"T{kind}/登録", {
+                    resource: "DEMO", **fields,
+                    kind + "開始日時": DATE + " 08:00:00", kind + "終了日時": DATE + " 09:00:00",
+                })
+                key = item[id_key]
+                daily_path = f"S{kind}_日表示/{kind}一覧"
+                before, = self.post_apps(daily_path, {"対象日付": DATE})[kind + "一覧"]
+                self.assertEqual(before[id_key], key)
+                self.assertEqual(before[kind + "開始日時"][:10], DATE)
+                self.post_apps(f"S{kind}_週表示/ドラッグ更新", {id_key: key, resource: "DEMO", "変更後日付": "2026-11-27"})
+                # 日表示APIは前後30日を先読みするため、取得件数では移動を判定できない。
+                after, = self.post_apps(daily_path, {"対象日付": DATE})[kind + "一覧"]
+                self.assertEqual(after[id_key], key)
+                self.assertEqual(after[kind + "開始日時"][:10], "2026-11-27")
+                self.assertEqual(after[kind + "終了日時"].replace("T", " ")[:16], "2026-11-27 09:00")
+                week = self.post_apps(f"S{kind}_週表示/{kind}一覧", {"開始日付": DATE, "終了日付": "2026-11-27"})
+                row, = week[kind + "一覧"]
+                self.assertEqual(row[id_key], key)
+                self.assertEqual(row[kind + "開始日時"].replace("T", " ")[:16], "2026-11-27 08:00")
+
+    def test_業務DBを分離しても入出庫と棚卸が在庫推移に反映される(self):
+        from core_crud.C採番 import init_C採番_data
+        with database.SessionLocal() as db:
+            init_C採番_data(db)
+
+        self.post_apps("M商品分類/登録", {"商品分類ID": "TEST", "商品分類名": "テスト"})
+        self.post_apps("M商品/登録", {"商品ID": "ITEM", "商品名": "在庫品", "単位": "個", "商品分類ID": "TEST"})
+        for kind, day, field, quantity in [
+            ("入庫", "2026-11-25", "入庫数量", 10),
+            ("出庫", "2026-11-26", "出庫数量", 3),
+            ("棚卸", "2026-11-27", "実棚数量", 8),
+        ]:
+            with self.subTest(伝票=kind):
+                self.post_apps(f"T商品{kind}/登録", {
+                    kind + "日": day, "明細一覧": [{"明細SEQ": 1, "商品ID": "ITEM", field: quantity}],
+                })
+        result = self.post_apps("V商品推移表/一覧", {
+            "開始日付": "2026-11-24", "終了日付": "2026-11-27", "商品分類ID": "TEST",
+        })
+        product, = result["商品推移データ"]
+        self.assertEqual(product["商品ID"], "ITEM")
+        days = product["日別データ"]
+        self.assertEqual([row["推定在庫"] for row in days], [0, 10, 7, 8])
+        self.assertEqual((days[1]["入庫数量"], days[2]["出庫数量"], days[3]["棚卸数量"]), (10, 3, 8))
+
     def test_業務DBを分離してもCore認証と伝票採番が動く(self):
         from fastapi import FastAPI
         from core_crud.C採番 import init_C採番_data
@@ -563,6 +627,29 @@ class 日誌Tests(unittest.TestCase):
         with closing(sqlite3.connect(self.business_path)) as db, db:
             db.execute("UPDATE C採番 SET 有効=1 WHERE 採番ID='T日誌作業'")
         self.assertEqual(作業登録(DATE, "one"), 20001)
+
+    def test_作業を分けても一日の明細合計は100行まで(self):
+        body = sample()
+        for 作業 in body["記録"]:
+            作業["明細"] = [{"行番号": i, "作業内容": f"明細{i}"} for i in range(1, 51)]
+        saved = self.call("登録", body).json()
+        self.assertEqual(saved["status"], "OK", saved)
+        作業ID = saved["data"]["記録"][0]["作業ID"]
+        extra = self.call("内容登録", {"日誌日付": DATE, "作業ID": 作業ID, "作業内容": "101行目"}).json()
+        self.assertEqual(extra["error"]["code"], "VALIDATION_ERROR")
+        records = self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"]
+        self.assertEqual([len(item["明細"]) for item in records], [50, 50])
+
+    def test_作業を分けても一日の添付合計に上限を適用する(self):
+        body = sample()
+        for 作業 in body["記録"]:
+            作業["明細"] = [{"行番号": 1, "添付": [{"ファイル名": "確認.txt", "base64内容": "YWJj"}]}]
+        # 3バイトのファイルが2件。日誌全体で上限ちょうどと1バイト超過を確かめる。
+        with patch("apps_schema.T日誌.日誌添付合計上限", 6):
+            self.assertEqual(len(T日誌保存要求.model_validate(body).記録), 2)
+        with patch("apps_schema.T日誌.日誌添付合計上限", 5):
+            with self.assertRaisesRegex(ValueError, "添付の合計は日誌1件につき"):
+                T日誌保存要求.model_validate(body)
 
     def test_添付容量制限(self):
         for size, count in [(5 * 1024 * 1024 + 1, 1), (4 * 1024 * 1024, 4)]:

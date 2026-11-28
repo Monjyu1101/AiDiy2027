@@ -90,7 +90,7 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-deadline-fields input{width:100%;padding:0 1px}
 .sticky-deadline-actions{display:flex;justify-content:flex-end;gap:4px}
 .sticky-deadline-actions button{min-height:22px;font:12px system-ui,sans-serif;cursor:pointer}
-/* 15分前から期限後まで同じ回転を続け、光のない部分は透明にする。 */
+/* OSの動き軽減設定に関係なく、15分前から期限後まで同じ回転を続ける。 */
 @property --sticky-deadline-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
 :is(.sticky-due-soon,.sticky-overdue) .sticky-deadline-set{position:relative;border-color:transparent}
 :is(.sticky-due-soon,.sticky-overdue) .sticky-deadline-set::after{
@@ -106,11 +106,4 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 @keyframes sticky-deadline-pulse{
  0%,100%{background-color:var(--sticky-pulse-base,var(--sticky-bg))}
  40%,60%{background-color:var(--sticky-glow)}
-}
-@media(prefers-reduced-motion:reduce){
- :is(.sticky-due-soon,.sticky-overdue) .sticky-deadline-set::after{content:none}
- .sticky-overdue{animation:none}
- .sticky-due-soon .sticky-deadline-set,.sticky-overdue .sticky-deadline-set{border-color:currentColor}
- .sticky-overdue{box-shadow:inset 0 0 0 2px currentColor}
- .sticky-overdue .sticky-adhesive{background:#00000024}
 }

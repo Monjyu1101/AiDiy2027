@@ -69,12 +69,12 @@ async function appState(switchMini=async()=>true,globals={}){
  const scope=vue.effectScope();let state;const warn=console.warn;console.warn=()=>{};try{state=scope.run(()=>app.setup({}, {expose(){}}));}finally{console.warn=warn;}
  return {scope,state,displays,switches};
 }
-test('実App状態: 自動起動完了でアプリ起動へ一度だけ移り、表示モードを変えない',async()=>{
+test('実App状態: 自動起動完了でミニランチャーのアプリ起動へ一度だけ移る',async()=>{
  const {scope,state,displays,switches}=await appState();
  try{
   state.connected.value=true;await flush();
   state.起動.自動起動完了.value={実行ID:'auto-1',自動起動:true,種別:'start',状態:'done'};await flush();
-  assert.equal(state.tab.value,'apps');assert.equal(state.ミニ表示.value,false);assert.deepEqual(switches,[]);assert.deepEqual(displays.at(-1),[true,false]);
+  assert.equal(state.tab.value,'apps');assert.equal(state.ミニ表示.value,true);assert.deepEqual(switches,[true]);assert.deepEqual(displays.at(-1),[true,false]);
   await state.changeTab('start');state.起動.自動起動完了.value={実行ID:'auto-1',自動起動:true,種別:'start',状態:'done'};await flush();assert.equal(state.tab.value,'start');
  }finally{scope.stop();}
 });

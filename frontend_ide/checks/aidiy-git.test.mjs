@@ -12,11 +12,25 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import repository from '../aidiy_git/リポジトリ.cjs';
+import {diffRows} from '../aidiy_git/diff-lines.js';
 import {startGit} from '../aidiy_git/serve.mjs';
 import {createGitPanel,gitToolsOnline} from '../aidiy_git/パネル.mjs';
 import {createServer} from 'node:http';
 import {once} from 'node:events';
 const execute=promisify(execFile);
+
+test('差分のファイル名と、同じ記号で始まる追加・削除の本文を区別する',()=>{
+ const lines=['--- a/例.md','+++ b/例.md','@@ -1,2 +1,2 @@','--- 以前のメモ','+++ 新しいメモ',' +++ 共通の行',
+  'diff --git a/次.md b/次.md','--- a/次.md','+++ b/次.md','@@ -2 +2 @@','-前','+後'];
+ const rows=diffRows(lines);
+ assert.deepEqual(rows.map(row=>row.text),lines);
+ assert.deepEqual(rows.map(row=>row.kind),['','','chunk','removed','added','','','','','chunk','removed','added']);
+});
+
+test('マージ差分は各親の変更記号を読み、本文中の記号は色分けに使わない',()=>{
+ const rows=diffRows(['@@@ -1,2 -1,2 +1,2 @@@',' -以前の行',' +新しい行','  ++ 共通の行']);
+ assert.deepEqual(rows.map(row=>row.kind),['chunk','removed','added','']);
+});
 const git=(cwd,...args)=>execute('git',['-c','protocol.file.allow=always',...args],{cwd,encoding:'utf8'});
 const user=async root=>{await git(root,'config','user.name','AiDiy fixture');await git(root,'config','user.email','test@example.invalid');};
 const make=async(t)=>{
@@ -61,7 +75,8 @@ test('real Git panel: diff, staging, unstaging, commits, history, fetch, fast-fo
  await set(peer,'peer.txt','peer\n');await git(peer,'add','peer.txt');await git(peer,'commit','-m','peer');await git(peer,'push');
  s=await op('fetch',{remote:'local'});assert.equal(s.behind,1);
  s=await op('pull',{remote:'local'},s);assert.equal(s.behind,0);
- assert.equal(await readFile(join(root,'peer.txt'),'utf8'),'peer\n');
+ const pulled=await readFile(join(root,'peer.txt'),'utf8');
+ assert.equal(pulled.replace(/\r\n/g,'\n'),'peer\n');
  await set(root,'start.txt','local divergence\n');await git(root,'add','start.txt');await git(root,'commit','-m','local branch');
  await set(peer,'peer.txt','different divergence\n');await git(peer,'add','peer.txt');await git(peer,'commit','-m','peer branch');await git(peer,'push');
  s=await op('fetch',{remote:'local'});const head=s.head;assert.deepEqual([s.ahead,s.behind],[1,1]);
@@ -146,31 +161,38 @@ test('public CLI entry starts the isolated Git panel without Core or IDE UI depe
 });
 
 const gitLauncher=fileURLToPath(new URL('../aidiy_git/launch.mjs',import.meta.url));
-async function launchGitFixture(t,cwd,args=[]){
+async function withGitFixture(cwd,args,check){
  const child=spawn(process.execPath,[gitLauncher,...args,'--no-open'],{cwd,windowsHide:true,stdio:['ignore','pipe','pipe']});
- const stopped=once(child,'close');
- t.after(async()=>{if(child.exitCode===null&&child.signalCode===null)child.kill();await stopped;});
- const output=await new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>reject(Error('Git fixture did not start')),8000);
-  let text='',errors='';
-  child.stderr.on('data',chunk=>{errors+=chunk;});
-  child.stdout.on('data',chunk=>{text+=chunk;if(/プロジェクト: .*\r?\n/.test(text)){clearTimeout(timer);resolve(text);}});
-  child.on('exit',code=>{clearTimeout(timer);reject(Error(errors||'Git fixture exited: '+code));});
-  child.on('error',error=>{clearTimeout(timer);reject(error);});
- });
- return /http:\/\/127\.0\.0\.1:\d+\//.exec(output)[0];
+ const stopped=new Promise(resolve=>child.once('close',resolve));
+ try{
+  const output=await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(Error('Git fixture did not start')),8000);
+   let text='',errors='';
+   child.stderr.on('data',chunk=>{errors+=chunk;});
+   child.stdout.on('data',chunk=>{text+=chunk;if(/プロジェクト: .*\r?\n/.test(text)){clearTimeout(timer);resolve(text);}});
+   child.once('close',code=>{clearTimeout(timer);reject(Error(errors||'Git fixture exited: '+code));});
+   child.once('error',error=>{clearTimeout(timer);reject(error);});
+  });
+  await check(/http:\/\/127\.0\.0\.1:\d+\//.exec(output)[0]);
+ }finally{
+  // Windows では子プロセスの作業フォルダを終了前に削除できない。
+  if(child.exitCode===null&&child.signalCode===null)child.kill();
+  await stopped;
+ }
 }
 test('the standalone command opens the current repository root and keeps explicitly selected workspaces',async t=>{
  const dir=await make(t),root=join(dir,'日本語 Git root');
  await mkdir(root);await init(root);await set(root,'current.txt','from cwd');
- const url=await launchGitFixture(t,root);
- const query=client(url,keyOf(await fetch(url).then(r=>r.text())));
- assert.equal((await query('status')).result.rows[0].path,'current.txt');
- const explicit=await launchGitFixture(t,dir,['--project',dir]);
- const workspace=client(explicit,keyOf(await fetch(explicit).then(r=>r.text())));
- const result=(await workspace('repositories')).result;
- assert.equal(result.mode,'workspace');
- assert.deepEqual(result.repositories.map(item=>item.name),['日本語 Git root']);
+ await withGitFixture(root,[],async url=>{
+  const query=client(url,keyOf(await fetch(url).then(r=>r.text())));
+  assert.equal((await query('status')).result.rows[0].path,'current.txt');
+ });
+ await withGitFixture(dir,['--project',dir],async url=>{
+  const workspace=client(url,keyOf(await fetch(url).then(r=>r.text())));
+  const result=(await workspace('repositories')).result;
+  assert.equal(result.mode,'workspace');
+  assert.deepEqual(result.repositories.map(item=>item.name),['日本語 Git root']);
+ });
 });
 
 test('the standalone command reports missing Git, missing .git, and invalid .git before opening a window',async t=>{

@@ -49,10 +49,10 @@ onMounted(() => {
   </div>
   <Layout v-else>
     <RouterView v-slot="{ Component }">
-      <Suspense>
+      <Suspense v-if="Component">
         <component :is="Component" />
-        <template #fallback>
-          <div v-if="isAIコア" class="ai-core-loading"></div>
+        <template v-if="isAIコア" #fallback>
+          <div class="ai-core-loading"></div>
         </template>
       </Suspense>
     </RouterView>

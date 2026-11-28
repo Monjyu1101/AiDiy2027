@@ -47,7 +47,7 @@ http://127.0.0.1:8092
 
 - 開発時は `http://127.0.0.1:8092` の `/core/*` と `/core/ws/AIコア` を Vite が Core `8091` へ転送します。`/apps/*` は Apps `8098` へ転送します。
 - 配布版の REST は既定で `http://127.0.0.1:8091`。WebSocket は HTTP(S) 表示時に同じ公開元の `/core/ws/AIコア`、`file:` 表示時に `ws://127.0.0.1:8091/core/ws/AIコア` を使います。`VITE_CORE_BASE_URL` / `VITE_CORE_WS_URL` で変更できます（`src/api/config.ts`）。
-- Backend MCP（Windows は20、Linux / macOS は19サーバー）: `http://127.0.0.1:8095/`（一覧）、`http://127.0.0.1:8095/{mcp_name}/sse`（SSE 接続）
+- Backend MCP（Windows は21、Linux / macOS は20サーバー）: `http://127.0.0.1:8095/`（一覧）、`http://127.0.0.1:8095/{mcp_name}/sse`（SSE 接続）
 
 ## 補足コマンド
 

@@ -29,11 +29,11 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 
 最初に共通準備・Diagを確認し、使うアプリまたはWeb業務の冊子へ進みます。Toolsは連携機能の確認時、確認結果は実施範囲と残件の照合時に参照します。すべてを順に実行する必要はありません。サーバー停止・外部送信・登録更新を伴う章は、その操作条件を確認してから実施します。
 
-冊子の役割と実行形態の一覧はここに集約しています。**操作・検証ガイド25冊＋結果台帳1冊＝26冊**です。PDFの存在は全項目の合格を意味しません。実機試験、自動・隔離試験、音声解説、過去の証拠と今回の結果を区別し、各冊子の未確認範囲も確認してください。
+冊子の役割と実行形態の一覧はここに集約しています。**操作・検証ガイド28冊＋結果台帳1冊＝29冊**です。実機試験、自動・隔離試験、音声解説、各冊子の未確認範囲も確認してください。
 
-本文・図・PDF・参照先の照合範囲は[資料整合の記録](../../docs/セルフテスト、操作ガイド/evidence/document-alignment.json)、現行26冊のハッシュとページ数は[PDF台帳](../../docs/セルフテスト、操作ガイド/evidence/pdf-manifest.json)を参照します。Naviは操作・検証ガイド、共通確認結果は結果台帳です。資料整合は新しい実機PASSに数えません。
+本文・図・PDF・参照先の照合記録と、現行29冊のハッシュ・ページ数を参照できます。 [11月7～8日の資料整合記録](../../docs/セルフテスト、操作ガイド/evidence/document-alignment.json)、[PDF台帳](../../docs/セルフテスト、操作ガイド/evidence/pdf-manifest.json)
 
-共通の準備・記録・命名規則は[説明資料の書き方](./セルフテスト,_説明資料の書き方.md)、解説音声の段取りは[ナレーション方法](./共通,セルフテスト解説・ナレーション方法.md)です。この2文書と本索引は26冊のPDFに含めません。
+共通の準備・記録・命名規則は[説明資料の書き方](./セルフテスト,_説明資料の書き方.md)、解説音声の段取りは[ナレーション方法](./共通,セルフテスト解説・ナレーション方法.md)です。この2文書と本索引は補助資料です。
 
 ### 共通準備・Diag
 
@@ -49,7 +49,9 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 
 | 冊子・本文 | PDF | 役割 | 対象実行形態 |
 |---|---|---|---|
-| [aidiy_memo ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_memo,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_memo,操作編.pdf) | 付箋の作成・保存・色・大きさ・移動・復元・ゴミ箱 | Windows Electron（Diag／単独Memo） |
+| [aidiy_memo ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_memo,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_memo,操作編.pdf) | 付箋の作成・保存・期限の設定と解除・復元・ゴミ箱 | Windows Electron（Diag／単独Memo） |
+| [aidiy_cpu ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_cpu,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_cpu,操作編.pdf) | ホストのCPU・GPU・RAMの使用率、欠測時の読み方と背景切替 | 単独CPU／IDE子窓 |
+| [aidiy_git ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_git,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_git,操作編.pdf) | リポジトリ選択、差分、履歴、コミット、同期 | ローカルGitパネル（単独／Diag／IDE） |
 | [aidiy_navi ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.pdf) | 開発目標・作業項目・推定達成率・次の提案 | 単独／IDE・Web。評価は読み取り専用、自動航行オン時はCodeが変更 |
 | [aidiy_term ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_term,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_term,操作編.pdf) | CLIを開く入口とTerm画面 | 単独Electron（CLI個別操作はHermes編等） |
 | [aidiy_hermes ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_hermes,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_hermes,操作編.pdf) | ヘルプ・状態確認とCLI会話 | CLI。Electronアプリではありません |
@@ -71,6 +73,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | 冊子・本文 | PDF | 役割 | 対象実行形態 |
 |---|---|---|---|
 | [frontend_web ／ AiDiy編](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,AiDiy編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,AiDiy編.pdf) | ログイン、AI画面、共通ナビ・管理・X系デモ | 通常Web（8090）。X系は第7章で、独立冊子なし |
+| [frontend_web ／ T日誌編](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,T日誌編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,T日誌編.pdf) | 日誌の検索、作業・明細・添付の登録と更新、日誌MCP | 通常Web（8090）／Tools |
 | [frontend_web ／ 配車管理編](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,配車管理編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,配車管理編.pdf) | 配車関連マスタ・伝票・日／週予定 | 通常Web（8090） |
 | [frontend_web ／ 生産・在庫管理編](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,生産・在庫管理編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,frontend_web,生産・在庫管理編.pdf) | 生産・在庫マスタ、伝票、予定・推移 | 通常Web（8090） |
 
@@ -94,11 +97,12 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 |-----------|------------------|
 | aidiy_pi の導入・モデル・OAuth・MCP・Code / Navi / Channels 連携 | [`command_pi,AiDiy連携.md`](./command_pi,AiDiy連携.md) |
 | aidiy_codex のコンパイル・区分別接続・設定 JSON、同梱 Codex の upstream 最新版への再移行 | [`command_codex/AGENTS.md`](../../command_codex/AGENTS.md)、[`変更点と最新版再移行要点.md`](../../command_codex/変更点と最新版再移行要点.md) |
-| aidiy_memo の単体起動・保存先・画像・プロジェクト切替・ゴミ箱 | [`frontend_diag,環境診断運用.md`](./frontend_diag,環境診断運用.md#aidiy_memo付箋メモ) |
+| aidiy_memo の単体起動・保存先・画像・期限・プロジェクト切替・ゴミ箱 | [`frontend_diag,環境診断運用.md`](./frontend_diag,環境診断運用.md#aidiy_memo付箋メモ) |
 | Electronのタイトルバー開閉標準、0.5秒長押し移動、表示開始ズーム | [`共通,Electronウィンドウ基本方針.md`](./共通,Electronウィンドウ基本方針.md) |
 | 今後の改善提案を比較し、採用条件を検討する | [`共通,明日のために,改善提案.md`](./共通,明日のために,改善提案.md) |
 | 固定版の改善課題と再現条件・検証限界を確認する | [`共通,明日のために,改善課題.md`](./共通,明日のために,改善課題.md) |
 | AGENTS / CLAUDE / _AIDIY の役割分担整理 | [`共通,ナレッジ更新手順.md`](./共通,ナレッジ更新手順.md) |
+| T日誌の Web 画面・専用 DB・MCP の担当を確認する | [Web の日誌](../../frontend_web/AGENTS.md#日誌)、[日誌 MCP](./backend_tools,構成.md#t日誌の操作) |
 | DB スキーマ差分、起動時のカラム不足 | [`backend_server,スキーマ変更手順.md`](./backend_server,スキーマ変更手順.md) |
 | M / T / V / S 系の追加、登録漏れ | [`backend_server,M系マスタ追加手順.md`](./backend_server,M系マスタ追加手順.md)、[`backend_server,T系トランザクション追加手順.md`](./backend_server,T系トランザクション追加手順.md)、[`backend_server,V系エンドポイント追加手順.md`](./backend_server,V系エンドポイント追加手順.md)、[`backend_server,S系スケジューラ追加手順.md`](./backend_server,S系スケジューラ追加手順.md) |
 | M系マスタへのカラム追加 | [`backend_server,M系マスタ追加手順.md`](./backend_server,M系マスタ追加手順.md) |
@@ -303,6 +307,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | Markdown を現行実装へ追従させる | [`共通,ナレッジ更新手順.md`](./共通,ナレッジ更新手順.md) |
 | UTF-8 BOM を検出・除去する | [`共通,UTF8BOM問題対処.md`](./共通,UTF8BOM問題対処.md) |
 | 一時ファイル・バックアップを整理する | [`共通,クリーンアップ手順.md`](./共通,クリーンアップ手順.md) |
+| IDE・Diag・単独起動で Git パネルを使う | [Git パネル（aidiy_git）](../../frontend_ide/README.md#git-パネルaidiy_git) |
 | Git 未管理フォルダにローカル履歴を用意する | [`共通,ローカルGit管理.md`](./共通,ローカルGit管理.md) |
 | GitHub issue を確認・close する | [`共通,GitHubIssue運用手順.md`](./共通,GitHubIssue運用手順.md) |
 

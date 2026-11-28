@@ -16,14 +16,15 @@
 |---|---|---|
 | `openai_decisions/gpt-6-luna` | `AI判断_openai_decisions.py` | `https://api.openai.com/v1/decisions`、`openai_key_id` |
 | `openai_oauth/gpt-6-luna` | `AI判断_openai_jsonchat.py` | `https://chatgpt.com/backend-api/codex/responses`、Codex OAuth |
+| `gemini_agy/gemini-4-hydrogen` | `AI判断_gemini_agy.py` | `agy` の保存済み Google ログイン、テキスト専用 |
 | `freeai_chat/gemini-4-hydrogen` | `AI判断_freeai_jsonchat.py` | Google generateContent JSON、`freeai_key_id`優先 |
 | `gemini_chat/gemini-4-hydrogen` | `AI判断_gemini_jsonchat.py` | Google generateContent JSON、`gemini_key_id`優先 |
 
 `openai_jsonchat` は `openai_oauth` の別名として受け付ける。`ai_name` / `ai_model` での個別指定も可能。結合形式との矛盾や未知のプロバイダはエラーにする。明示指定した方式から別方式へ自動フォールバックしない。
 
-プロバイダ未指定（空欄 / `auto`）では `DECISION_AI_NAME` を使う。設定も空欄 / `auto` なら、起動チェックに成功した `openai_oauth` を優先し、利用不可なら成功した `freeai_chat` → `openai_decisions` → `gemini_chat` の順で使う。利用可否未確認の直接利用時は `openai_oauth` を使う。引数や設定で指定した方式からの自動変更、実行中の通信エラーによる再送は行わない。
+プロバイダ未指定（空欄 / `auto`）では `DECISION_AI_NAME` を使います。設定も `auto` なら、起動チェック成功の方式を `openai_oauth` → `gemini_agy`（テキストのみ）→ `freeai_chat` → `gemini_chat` → `openai_decisions` の順で選びます。画像付きの自動選択では AGY を除外します。利用可否未確認の直接利用時は `openai_oauth` を使います。明示方式は維持し、通信エラー後の再送は行いません。
 
-実行モデルは、明示 `model` / `ai_model` → 方式別 `DECISION_*_MODEL` → 既定値の順で解決する。既存の設定値は保持し、各アダプターも渡されたモデルを使う。未指定の既定値はOpenAI両方式 `gpt-6-luna`、FreeAI/Gemini `gemini-4-hydrogen`。通常Chat/Live/Codeには適用しない。
+実行モデルは、明示 `model` / `ai_model` → 方式別 `DECISION_*_MODEL` → 既定値の順で解決する。既存の設定値は保持し、各アダプターも渡されたモデルを使う。未指定の既定値はOpenAI両方式 `gpt-6-luna`、AGY / FreeAI / Gemini `gemini-4-hydrogen`。通常Chat/Live/Codeには適用しない。
 
 `AiDiy_key.json` の設定は `conf/conf_json.py` の既定値と同期し、LIVE設定ブロックの直後に保存する。不足したNAME / MODELキーは `auto` で補完する。設定管理を経由せず旧ファイルを直接読んだ場合も、不足キーを `auto` と扱う。既存の値や方式別モデル設定は上書きしない。
 
@@ -32,10 +33,11 @@
 | `DECISION_AI_NAME` | `auto` |
 | `DECISION_OPENAI_MODEL` | `auto` |
 | `DECISION_OPENAI_OAUTH_MODEL` | `auto` |
-| `DECISION_FREEAI_MODEL` | `auto` |
-| `DECISION_GEMINI_MODEL` | `auto` |
+| `DECISION_GEMINI_AGY_MODEL` | `gemini-4-hydrogen` |
+| `DECISION_FREEAI_MODEL` | `gemini-4-hydrogen` |
+| `DECISION_GEMINI_MODEL` | `gemini-4-hydrogen` |
 
-`DECISION_AI_NAME` には `auto` / `openai_oauth` / `openai_decisions` / `freeai_chat` / `gemini_chat`、方式別モデルキーには `auto` またはモデル名だけ（例: `gpt-6-luna`）を指定する。`provider/model` の結合形式は呼出し引数 `model` 用。既存の旧共通キーは削除せず、不足する方式別キーへだけ移行する。既存の方式別値はautoも含めて保持する。
+`DECISION_AI_NAME` には `auto` / `openai_oauth` / `openai_decisions` / `freeai_chat` / `gemini_chat` / `gemini_agy`、方式別モデルキーには `auto` またはモデル名だけ（例: `gpt-6-luna`）を指定する。`provider/model` の結合形式は呼出し引数 `model` 用。現行実装では、不足するキーを初期値で補います。旧キーからの自動移行は行わず、既存の方式別値は保持します。
 
 OAuthは既存の `AIチャット_openai._oauth_access_token` を呼び、Hermes / Codex共有ストアの更新処理・排他制御を共用する。トークンを独自保存しない。backend_server / backend_tools の環境には `httpx` と、Hermes設定読込用の `PyYAML` が必要。
 
@@ -55,7 +57,7 @@ OAuthは既存の `AIチャット_openai._oauth_access_token` を呼び、Hermes
 ## Diagで明示指定だけ成功する場合
 
 - `auto / auto` は単純にOAuth固定ではなく、`DECISION_AI_NAME`、方式別モデル設定、Tools起動時の `availability` に従う。明示指定と同じ方式・モデルが選ばれているか、`decisions_config` の `default_model` / `configured_defaults` / `availability` で確認する。キー値やトークンの共有は不要。
-- `openai_oauth` はCodex OAuth、`openai_decisions` はOpenAI APIキー、FreeAI/GeminiはGoogle APIキーを使う。OAuth成功だけでは他の認証経路の成功は保証されない。判断アダプターはHTTP実装で、Decisions SDKのimportは不要。
+- `openai_oauth` はCodex OAuth、`openai_decisions` はOpenAI APIキー、FreeAI/GeminiはGoogle APIキーを使う。OAuth成功だけでは他の認証経路の成功は保証されない。`gemini_agy` は保存済み Google ログインを使う CLI 経路です。[Agy の運用手順](./backend_server,AGY-Googleログイン運用.md)
 - DiagはMCPエラーのうち既知のHTTP状態・認証未設定・起動チェック・応答形式のカテゴリを固定メッセージで表示する。外部APIの生レスポンスや未知の詳細は表示しない。失敗時はこの説明文と指定方式・モデルを確認し、`401/403/429/400` 等の実結果なしに原因を認証・利用枠・モデルへ断定しない。
 - 起動時の15秒チェックはスナップショットであり、後の明示指定成功だけでは自動選択の可用性表を書き換えない。起動時の一時失敗や既定モデル変更が疑われる場合は、Tools再起動後のチェック結果で確認する。
 
@@ -105,7 +107,7 @@ answers = response.json()["data"]["answers"]
 
 OAuth側は Responses の `text.format.type=json_schema`, `strict=true` を使う。全経路とも回答名・型・候補の一致、確率の範囲と合計、段階評価の加重平均を検証する。JSON不正・途中切断・タイムアウト・未完了は成功として返さない。HTTP入力不正は422、処理エラーは400と `status=NG`。MCPではToolErrorを返す。
 
-互換なのは入出力形式である。OAuth側の確率・confidenceは生成モデルの推定値で、Decisions APIと同じ校正値や実測頻度を保証しない。方式別に閾値を評価する。`method` は `decisions_api`、`responses_json_schema`、または Gemini / FreeAI の `gemini_json_schema`。
+互換なのは入出力形式である。OAuth側の確率・confidenceは生成モデルの推定値で、Decisions APIと同じ校正値や実測頻度を保証しない。方式別に閾値を評価する。`method` は `decisions_api`、`responses_json_schema`、Gemini / FreeAI の `gemini_json_schema`、AGY の `gemini_agy_jsonchat` のいずれかです。
 
 ## プロバイダ・モデル追加
 
@@ -134,11 +136,11 @@ backend_tools/.venv/Scripts/python.exe -X utf8 -m unittest discover -s scripts/c
 
 ## Diagの判断モデル情報
 
-`_AIDIY/aidiy_diag/decisions_models_info.json` を `conf_models.get_decisions_models()` で読む。形式は `{方式名: {models: {モデルID: 表示名}}}`。4方式のうち認証付き取得候補があるものだけを保存する。詳細は [Diag運用](./frontend_diag,環境診断運用.md) を参照。
+`_AIDIY/aidiy_diag/decisions_models_info.json` を `conf_models.get_decisions_models()` で読む。形式は `{方式名: {models: {モデルID: 表示名}}}`。OpenAI・Gemini API・FreeAI の候補に加え、Google ログインで取得した AGY の候補も扱う。詳細は [Diag運用](./frontend_diag,環境診断運用.md) を参照。
 
 候補のない方式は省略、全体が空なら `{}`。ファイル未作成・不正も読込口では空一覧として扱う。設定値や方式別既定モデルは変更せず、明示引数 > 共通設定 > 方式別設定 > 方式既定値の順と既存の生成起動チェックを維持する。Diagの候補と `decisions_config.available_models`（生成確認済み）は別の意味を持つ。
 
-Web/Avatarの設定画面は4方式とautoを扱い、Diagの判断一覧を候補として読む。詳細は `backend_server,frontend_avatar,frontend_web,AIモデル設定変更手順.md` を参照。取得済み候補と保持中の設定値を区別し、候補未取得でも既存設定は失わない。
+Web / Avatar / Diag の設定画面は5方式と `auto` を扱い、Diagの判断一覧を候補として読む。詳細は `backend_server,frontend_avatar,frontend_web,AIモデル設定変更手順.md` を参照。取得済み候補と保持中の設定値を区別し、候補未取得でも既存設定は失わない。
 
 ### 判断系の候補管理
 

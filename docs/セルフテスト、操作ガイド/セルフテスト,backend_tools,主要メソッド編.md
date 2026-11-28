@@ -30,6 +30,8 @@
 1. [システム起動編](セルフテスト,aidiy_diag,システム起動編.md)に従いToolsを起動します。Task／Teamを使う場合は統合サーバーも起動します。
 2. `GET http://127.0.0.1:8095/`でMCP一覧、`GET /{MCP名}/list`で引数仕様を取得します。
 3. 下表のRESTパスへJSONをPOSTします。MCPクライアントでは同じ行のMCPメソッド名を使います。両者は名前が異なる場合があります。
+
+現行のMCPはWindowsで21個、Linux／macOSで20個です。日誌を利用する場合は一覧の `aidiy_dialy_control` を確認し、`GET /aidiy_dialy_control/list` で検索と作業・明細の7操作を確認します。検索や登録の流れは日誌操作編にあります。 [T日誌操作編](セルフテスト,frontend_web,T日誌編.md)
 4. `error`の有無、`status`、返された値、保存ファイルを照合します。HTTP 200だけで成功にしません。
 
 ```python

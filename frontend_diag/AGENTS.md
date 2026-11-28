@@ -1,6 +1,6 @@
 # frontend_diag 実装概要
 
-Node.js 標準モジュールの診断・起動管理サーバーと Electron / Web 表示です。実装は `diag/` と `memo/` に分離し、`shared/`・`runtime/`・`ui/`（配布ビルド）・`static/` を共有します。公開起動入口 `diag_main.mjs` は `diag/diag_main.mjs` に委譲します。`memo_main.mjs` / `aidiy_memo` は配置元のシステム付箋だけを扱う単体入口で、Diagと同じElectron排他を共有します。AIコアや DB が未設定でも診断画面を起動できます。起動管理は明示操作時だけ Python の既存起動基盤を使用します。
+Node.js 標準モジュールの診断・起動管理サーバーと Electron / Web 表示です。実装は `diag/` と `memo/` に分離し、`shared/`・`runtime/`・`ui/`（配布ビルド）・`static/` を共有します。公開起動入口 `diag_main.mjs` は `diag/diag_main.mjs` に委譲します。`memo_main.mjs` / `aidiy_memo` は配置元のシステム付箋だけを扱う単体入口で、Diagと同じElectron排他を共有します。AIコアや DB が未設定でも診断画面を起動できます。サービス起動は画面操作または `aidiy_diag --auto` で開始し、Python の既存起動基盤を使用します。
 
 - `diag/起動/desktop.mjs` / `diag/起動/electron-main.cjs`: 既存共有セットアップで用意した Electron を通常表示に使います。ブラウザ・Codespaces は Node.js のみです。Electron のプロファイルは配置元 `_AIDIY/aidiy_diag/electron/` に保存し、ユーザーホーム・旧保存先へのフォールバックは行いません。
 - `diag_main.mjs`: ループバック HTTP、起動単位の認証、ブラウザ起動。

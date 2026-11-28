@@ -8,9 +8,14 @@ if(process.versions.electron){
  app.whenReady().then(async()=>{
   const w=new BrowserWindow({width:320,height:260,show:false,frame:false});
   await w.loadFile(process.env.AIDIY_MEMO_UI_FIXTURE);w.setSize(321,261);w.setSize(320,260);await new Promise(resolve=>setTimeout(resolve,100));
+  const motion=process.env.AIDIY_MEMO_UI_TEST_MOTION;
+  // OSの動き軽減設定の有無にかかわらず、同じ回転と明滅を検証する。
+  w.webContents.debugger.attach('1.3');
+  await w.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:motion}]});
   console.log(await w.webContents.executeJavaScript(`(async()=>{
    const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
    const expect=(value,label)=>{if(!value)throw Error(label)};
+   expect(matchMedia('(prefers-reduced-motion: reduce)').matches===${motion==='reduce'},'requested motion preference is active');
    const title=document.querySelector('.sticky-title'),text=document.querySelector('.sticky-text');
    expect(title&&text,'title and body present');expect(!document.querySelector('.memo-board'),'no board');
    expect(document.querySelectorAll('textarea').length===1,'one note only');
@@ -92,7 +97,8 @@ if(process.versions.electron){
    await advance(warning);
    const orbit=dueButton.getAnimations({subtree:true}).find(a=>a.animationName==='sticky-deadline-orbit');
    expect(noteSurface.classList.contains('sticky-due-soon')&&orbit&&ring().animationDuration==='1.6s','orbit starts at 15 minutes');
-   await orbit.ready;orbit.pause();await orbit.ready;
+   // 非表示の検証窓でも描画フレームを待たず、時刻を指定して見た目を確認する。
+   orbit.pause();
    orbit.currentTime=0;const gradient=ring().backgroundImage;
    orbit.currentTime=400;
    expect(ring().getPropertyValue('--sticky-deadline-angle')==='90deg','light advances a quarter turn over 400ms');
@@ -117,7 +123,7 @@ if(process.versions.electron){
    expect(window.calls.at(-1).body.期限===null&&!document.querySelector('.sticky-overdue')&&ring().content==='none','clearing deadline stops both effects and saves');
    document.querySelector('.sticky-trash').click();await wait(10);expect(window.calls.at(-1).route==='api/メモ/削除','trash removes saved note');expect(window.closedCalls===2,'trash dismisses note');
    expect(window.identity?.id==='one.memo.json','created identity reported');
-   return 'PASS image paste/drop/base64/replace/remove/scroll and one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash';
+   return 'PASS ${motion}: deadline save, orbit, pulse and clear; memo editing, image, and window actions';
   })()`));
   // Strict 2/3 threshold, repeated resize, and immediate movement in either orientation.
   for(const [width,height,left] of [[300,200,false],[300,199,true],[320,260,false],[400,125,true],[200,200,false]]){
@@ -152,8 +158,10 @@ window.aidiyMemo={getInitialState:async()=>({note:null,sources:[{id:'project:one
 createApp(Memo,{api:async(route,{body})=>{window.calls.push({route,body});if(window.failSave)throw Object.assign(Error('合成競合'),{status:409});return {...body,id:body.id||'one.memo.json',保存先:body.保存先,revision:'revision-'+window.calls.length}}}).mount('#app');`);
    fs.writeFileSync(path.join(temp,'index.html'),'<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="app.css"><div id="app"></div><script src="app.js"></script>');
    await build({entryPoints:[path.join(temp,'entry.js')],outfile:path.join(temp,'app.js'),bundle:true,alias:{vue:req.resolve('vue/dist/vue.runtime.esm-bundler.js')},define:{'process.env.NODE_ENV':'"production"',__VUE_OPTIONS_API__:'false',__VUE_PROD_DEVTOOLS__:'false',__VUE_PROD_HYDRATION_MISMATCH_DETAILS__:'false'},plugins:[{name:'vue-sfc',setup(b){b.onLoad({filter:/\.vue$/},async({path:filename})=>{const {descriptor,errors}=parse(fs.readFileSync(filename,'utf8'));if(errors.length)throw errors[0];return {contents:compileScript(descriptor,{id:'memo',inlineTemplate:true}).content,loader:'js',resolveDir:path.dirname(filename)}})}}]});
-   const result=require('node:child_process').spawnSync(electron,['--no-sandbox','--headless','--disable-gpu',__filename],{env:{...process.env,XDG_CONFIG_HOME:path.join(temp,'config'),AIDIY_MEMO_UI_FIXTURE:path.join(temp,'index.html')},encoding:'utf8',timeout:20000});
-   process.stdout.write(result.stdout||'');if(result.status!==0){process.stderr.write(result.stderr||'');throw result.error||Error(`UI check failed: ${result.status}`);}
+   for(const motion of ['no-preference','reduce']){
+    const result=require('node:child_process').spawnSync(electron,['--no-sandbox','--headless','--disable-gpu',__filename],{env:{...process.env,XDG_CONFIG_HOME:path.join(temp,'config'),AIDIY_MEMO_UI_FIXTURE:path.join(temp,'index.html'),AIDIY_MEMO_UI_TEST_MOTION:motion},encoding:'utf8',timeout:20000});
+    process.stdout.write(result.stdout||'');if(result.status!==0){process.stderr.write(result.stderr||'');throw result.error||Error(`UI check failed (${motion}): ${result.status}`);}
+   }
   }finally{fs.rmSync(temp,{recursive:true,force:true});}
  })().catch(error=>{console.error(error);process.exitCode=1});
 }

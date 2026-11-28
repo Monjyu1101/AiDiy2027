@@ -48,6 +48,8 @@ DiagからPiが起動し、入力待ちになりました。
 
 選択画面で候補238件と現在の `gpt-6.1-sol` を確認し、Escで閉じました。閉じた後も右下のモデル表示は変わっていません。
 
+接続先を切り替えたら、モデル名とプロバイダーを確認します。通常の Antigravity CLI は `antigravity_cli`、保存済みの Google ログインを使う Agy は `agy_cli` です。Diagで利用可能なモデル一覧を書き込むと候補に反映されます。 [AGYの導入とモデル一覧の更新](../../_AIDIY/knowledge/backend_server,AGY-Googleログイン運用.md)
+
 **図203：モデル選択**
 
 ![図203 モデル選択](images/セルフテスト,aidiy_pi,操作編/Pi_203_モデル選択.png)

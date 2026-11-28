@@ -22,7 +22,7 @@ test('CPUの切離しNodeとElectronまでDiagの画面指定を引き継ぐ',as
  const project=mkdtempSync(join(tmpdir(),'cpu-launch-display-'));t.after(()=>rmSync(project,{recursive:true,force:true}));
  const launchPath=new URL('../launch.mjs',import.meta.url),require=createRequire(launchPath);
  const {transformSync}=require('esbuild');
- const {code}=transformSync(readFileSync(launchPath,'utf8').replaceAll('import.meta.url',JSON.stringify(launchPath.href)),{format:'cjs'});
+ const {code}=transformSync(readFileSync(launchPath,'utf8').replaceAll('import.meta.url',JSON.stringify(launchPath.href)),{format:'cjs',supported:{'dynamic-import':false}});
  const realOptions=await import('../viewer/launch-options.mjs');
  const area=JSON.stringify({x:-1920,y:40,width:1920,height:1040});
  for(const foreground of [false,true]){
@@ -30,7 +30,7 @@ test('CPUの切離しNodeとElectronまでDiagの画面指定を引き継ぐ',as
   Object.assign(fakeProcess,{execPath:process.execPath,env:{AIDIY_DEVELOPMENT_DISPLAY_AREA:area},argv:[],cwd:()=>project});
   const child=new EventEmitter();child.connected=true;child.disconnect=()=>{child.connected=false;};child.unref=()=>{};
   const spawn=(command,args,options)=>{calls.push({command,args,options});queueMicrotask(()=>child.emit('message',foreground?{existingWindow:true}:{launchReady:true}));return child;};
-  const load=name=>name==='node:fs'?{...require(name),existsSync:path=>String(path).endsWith('/dist/app.js')||require(name).existsSync(path)}
+  const load=name=>name==='node:fs'?{...require(name),existsSync:path=>String(path).endsWith(join('dist','app.js'))||require(name).existsSync(path)}
    :name==='node:child_process'?{spawn}
    :name==='./server.mjs'?{startDevelopment:async()=>({url:'http://127.0.0.1:12345/',publicUrl:'http://127.0.0.1:12345/',close:async()=>{}})}
    :name==='./デスクトップ/desktop-process.mjs'?{spawnDesktop:spawn}

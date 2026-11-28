@@ -13,6 +13,7 @@ const prefix='/development/git';
 const ownAsset=(name,mime)=>[name,[new URL('./'+name,import.meta.url),mime]];
 const assets=new Map([
  ownAsset('panel.js','text/javascript; charset=utf-8'),
+ ownAsset('diff-lines.js','text/javascript; charset=utf-8'),
  ownAsset('panel-chrome.js','text/javascript; charset=utf-8'),
  ownAsset('github-tabs.js','text/javascript; charset=utf-8'),
  ownAsset('panel.css','text/css; charset=utf-8'),

@@ -70,9 +70,14 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `core_main.py` | Core / Common / AI サーバー |
 | `apps_main.py` | 業務アプリサーバー |
 | `database.py` | SQLite 接続、Session、Base |
+| `database_paths.py` | `scripts/業務DB.json` から Core / Apps / 日誌 DB の保存先を解決 |
+| `apps_crud/日誌DB.py` | Apps 専用の日誌 DB を初期化（`apps_models/T日誌.py` の独立した metadata を使用） |
 | `deps.py` | 認証 dependency |
 | `auth.py` / `auth_keyring.py` | 通常 JWT の生成・検証、Core の通常 / 内部認証鍵の永続化・更新 |
 | `internal_auth.py` | IDE などの内部連携用トークンの発行・検証 |
+| `internal_api_auth.py` / `internal_file_access.py` | Code / Live 連携 API だけの認証境界と、単独 Avatar のファイル操作を所有セッションのプロジェクトへ限定する処理 |
+| `list_controls.py` | 一覧 API 共通の件数上限（1000 件）・無効データ表示の判定 |
+| `会話履歴パス.py` / `会話履歴参照.py` / `会話履歴記録.py` | 会話履歴のプロジェクト識別パス、次入力予測用の読み取り専用参照、MCP からの共通会話履歴記録（DB・テーブルは作成しない） |
 | `log_config.py` | ログ設定 |
 | `conf/` | 設定管理、モデル一覧、JSON 設定 |
 | `core_models/` | C系 / A系 SQLAlchemy model |
@@ -105,7 +110,7 @@ Core:
 Apps:
 
 - `M配車区分`、`M車両`、`M商品`、`M商品分類`、`M取引先分類`、`M取引先`、`M生産区分`、`M生産工程`、`M商品構成`
-- `T配車`、`T生産`、`T商品入庫`、`T商品出庫`、`T商品棚卸`
+- `T配車`、`T生産`、`T商品入庫`、`T商品出庫`、`T商品棚卸`、`T日誌`
 - 上記業務データに対応する `V*`（C系の `V権限` / `V利用者` / `V採番` は Core）
 - `S配車_*`、`S生産_*`
 
@@ -144,7 +149,7 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 - `AIストリーミング処理`
 - `AI音声処理`
 - `AIチャット*`（`gemini` / `local` / `ollama` / `openrt_chat` / `openrt_free` / `openai` / `openai_oauth` / `gemini_agy`。`freeai_chat` は `AIチャット_gemini.py` が扱う）
-- `AI判断*`（`openai_decisions` / `openai_oauth` / `freeai_chat` / `gemini_chat`。`openai_jsonchat` は `openai_oauth` の別名。共通の真偽確率・選択・段階評価）
+- `AI判断*`（`openai_decisions` / `openai_oauth` / `freeai_chat` / `gemini_chat` / `gemini_agy`。`openai_jsonchat` は `openai_oauth` の別名。共通の真偽確率・選択・段階評価）
 - `AIライブ*`（`gemini` / `openai`。`freeai_live` は `AIライブ_gemini.py` が扱う）
 - `AIコード*`（`AIコード_cli.py`、`AIコード_claude.py`）
 - `AI内部ツール`
@@ -159,7 +164,7 @@ AI 名の規約:
 |----------|------|
 | `CHAT_AI_NAME` | 原則 `_chat` で終わる。OAuth 接続の `openai_oauth` と `gemini_agy` は例外 |
 | `LIVE_AI_NAME` | `_live` で終わる |
-| `CODE_AI1_NAME`〜`CODE_AI6_NAME` | 原則 `_sdk` または `_cli`、例外として `aidiy_hermes` / `aidiy_pi` |
+| `CODE_AI1_NAME`〜`CODE_AI6_NAME` | 原則 `_sdk` または `_cli`、例外として `aidiy_hermes` / `aidiy_pi` / `aidiy_codex` |
 | `TASK_AI_NAME` | Code AI と同じ規約。`backend_taskteam` の AIタスク自動実行で使用 |
 | `TEAM_AI_NAME` | Code AI と同じ規約。`backend_taskteam` の AIチーム依頼実行で使用 |
 
@@ -218,6 +223,20 @@ MCP の構成と使い分けは `_AIDIY/knowledge/backend_tools,構成.md` と `
 - `T配車`: 配車トランザクション。
 - `T生産`: `明細SEQ=0` をヘッダー、`明細SEQ>=1` を払出明細とする明細型トランザクション。
 - `T商品入庫`、`T商品出庫`、`T商品棚卸`: 在庫管理トランザクション。
+- `T日誌`: 利用者・日付ごとの作業記録。現行実装では専用 DB の `T日誌作業` と `T日誌明細` に分け、固定の `作業ID` と作業内の `行番号` で管理する。作業にはプロジェクト、タイトル、作業時間、新規更新ファイル数、監査情報を持ち、明細には本文と添付を保存する。
+
+日誌の入口は `apps_router/T日誌.py`（`/apps/T日誌/*`）、`apps_schema/T日誌.py`、`apps_crud/T日誌.py`。Web からの通常 JWT 認証と Tools からの直接 loopback 内部連携を区別し、日誌の対象利用者と操作主体を別に記録します。MCP の7操作と認証条件は [T日誌の操作](../_AIDIY/knowledge/backend_tools,構成.md#t日誌の操作) を参照してください。
+
+| 区分 | エンドポイント（`/apps/T日誌/`） | 内容 |
+|------|------------------------------|------|
+| Web 一覧 | `一覧` / `一覧検索` / `一覧候補` / `利用者候補` | 自分の日別一覧、全利用者を対象にした日付範囲・利用者・プロジェクト・キーワードでの検索（件数制限は共通の1000件）、検索候補（利用者・プロジェクト）、登録先に選べる有効な利用者 |
+| Web 1日単位 | `取得` / `登録` / `変更` / `削除` | 1日分の作業・明細をまとめて扱う。`取得` は内容の SHA-256 を `更新版` として返し、`変更` で一致しなければ `CONFLICT` を返す。同じ日付の二重登録は `DUPLICATE` |
+| Tools 連携 | `検索` / `作業登録` / `作業変更` / `作業削除` / `内容登録` / `内容変更` / `内容削除` | `aidiy_dialy_control` 用の作業・明細単位の操作。内部認証はこの7操作で、直接 loopback 接続かつ `X-AiDiy-Diary: tools` の場合だけ受け付ける |
+
+- 作業ID は C採番の `T日誌作業`（初期値 10000）で払い出す。Apps の起動時に日誌 DB の最大作業ID を C採番へ引き継ぐため、Core DB を作り直しても重複しない。
+- 現行実装では、有効な利用者であれば `利用者ID` を指定して他の利用者の日誌も操作でき、監査項目には操作主体を記録する。無効な利用者を新規の登録先にすると `USER_INACTIVE` を返す。
+- 現行実装では、同じ利用者の1日分につき作業30件、全作業の明細合計100行、全添付の合計15 MiBまで。各明細には最大20ファイルを添付でき、1ファイルは1バイト～5 MiB。要求本文全体の上限は36 MiBで、これを超えると `PAYLOAD_TOO_LARGE` を返す。入力エラーの応答には本文や添付の値を含めない。
+- 回帰テストは `checks/test_diary.py`。
 
 #### V系 View Endpoint
 
@@ -249,10 +268,11 @@ MCP の構成と使い分けは `_AIDIY/knowledge/backend_tools,構成.md` と `
 | 配車管理 | `M配車区分`、`M車両`、`T配車`、`V配車`、`S配車_*` |
 | 生産管理 | `M生産区分`、`M生産工程`、`M商品`、`M商品構成`、`T生産`、`V生産`、`S生産_*` |
 | 資材在庫管理 | `M商品`、`T商品入庫`、`T商品出庫`、`T商品棚卸`、`V商品推移表` |
+| 日誌 | `T日誌` API、専用 DB の `T日誌作業` / `T日誌明細`、Web の一覧・編集、`aidiy_dialy_control` |
 
 ### 明細型パターン
 
-ヘッダー行と明細行を単一テーブルで管理します。
+`M商品構成`・`T生産` ではヘッダー行と明細行を単一テーブルで管理します。T日誌の作業・明細は別テーブルのため、このパターンには含めません。
 
 ```text
 ID    | 明細SEQ | 意味
@@ -275,7 +295,8 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 |------|------|
 | `CHAT_AI_NAME` | テキストチャット。`gemini_agy` は公式 agy の Google ログインを利用し、モデルは `CHAT_GEMINI_AGY_MODEL`（既定 `gemini-4-hydrogen`） |
 | `LIVE_AI_NAME` | 音声リアルタイム対話 |
-| `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OPENAI_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermes・Piは openai_oauth/gpt-6-luna、履歴非保存） |
+| `PREDICTION_AI_NAME` / `PREDICTION_*_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測。AGY、Pi、AiDiy Codex を含む10方式の設定は [設定管理](<../_AIDIY/knowledge/backend_server,設定管理(conf).md#default_config-のキー構成>) を参照 |
+| `DECISION_AI_NAME` / `DECISION_*_MODEL` | AI判断の方式とモデル。AGY は保存済み Google ログインを使うテキスト専用方式 |
 | `CODE_AI1_NAME`〜`CODE_AI6_NAME` | code1〜code6 のコード支援 |
 | `TASK_AI_NAME` / `TASK_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIタスク自動実行 |
 | `TEAM_AI_NAME` / `TEAM_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIチーム依頼実行 |

@@ -44,7 +44,7 @@ function fixture(options = {}) {
 }
 
 test('固定スクリプトは入力をコマンド化せず、ブロッキング読取で要求された計測だけ行う', () => {
-  assert.match(windowsMetricsProcessCommand, /\[Term\]::ReadLine\(\)/);
+  assert.match(windowsMetricsProcessCommand, /\[Console\]::ReadLine\(\)/);
   assert.match(windowsMetricsProcessCommand, /switch -Exact \(\$request\)/);
   assert.match(windowsMetricsProcessCommand, /default \{ exit 1 \}/);
   assert.doesNotMatch(windowsMetricsProcessCommand, /Invoke-Expression|ScriptBlock\]::Create|Start-Sleep/);

@@ -80,7 +80,7 @@ if self.code_ai == "grok_cli":
 そのため `_codexセッションID抽出()` 相当の stderr 解析は不要で、`実行()` 内のセッションID保存分岐にも追加しない。
 
 `実行()` の `完全プロンプト` フロー（履歴送信不要、初回のみ system_prompt 付与）に入る。
-該当条件: `self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "codex_cli", "opencode_cli", "grok_cli"]`
+該当条件: `self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "agy_cli", "codex_cli", "aidiy_codex", "opencode_cli", "grok_cli"]`
 
 バージョン確認は `_バージョン確認実行()` の汎用パス（`--version`）で動く。専用分岐は不要。
 

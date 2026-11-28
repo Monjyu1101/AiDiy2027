@@ -240,7 +240,7 @@ Playwright と Chromium が利用できる検証環境では `node frontend_diag
 
 通常の Markdown ガイド・skill 本文（README/AGENTS を除く）、画像・音声・モデル・Office/PDF、LaTeX 文書資産、ライセンス・非実行テキスト等は対象外です。実行可能な skill スクリプトやコード例は含めます。省略のある Python 教材 3 件は AST 解析できませんでしたが、全文テキストを走査済みです。全リポジトリの全バイトを検証したという主張ではありません。
 
-- [診断/coverage.json](./診断/coverage.json): 件数、基準コミット、除外、制限、AST テキスト代替走査の記録。
+- [diag/診断/coverage.json](./diag/診断/coverage.json): 件数、基準コミット、除外、制限、AST テキスト代替走査の記録。
 - [reference/source-manifest.json](./reference/source-manifest.json): 対象 3,333 件のパスと元の Git blob SHA。
 - [reference/source_scan.ts](./reference/source_scan.ts): 対象コードを実行しない、依存パッケージなしの TypeScript 走査スクリプト。Python は字句解析で呼出し・for・代入・dict 単位に候補を抽出します（旧 Python AST 版と同じ候補を出すことを確認済み。構文エラーのファイルも走査します）。基準コミットの作業コピーに対し Node.js 22.18+ で `node frontend_diag/reference/source_scan.ts REPOSITORY OUTPUT_JSON COMMIT frontend_diag/reference/source-manifest.json` を実行すると候補抽出を再現できます。抽出候補からカタログへの分類にはソース確認が必要です。
 
@@ -334,7 +334,7 @@ Python、uv を先頭に表示します。CLI や拡張は利用する機能に�
 
 旧静的調査の抽出結果をもとに、現在は 24 項目を診断します。ベースでは Electron の直前に Git を表示し、PATH 上の実行ファイルとバージョンを確認します。AiDiy 起動コマンド群、Hermes 本体・専用プラグイン・スキル・補助依存、macOS 音声再生（afplay）、GStreamer、Edge、Brave、OS 補助・シェル・開発・導入・配置用の補助ツール（pip 等）は診断カタログに含めません。任意項目を再表示するチェックもありません。
 実際のプログラムや機能を削除する変更ではありません。共通依存は非 Hermes の利用根拠で保持し、Hermes 専用の探索パスも除外します。
-対象ソース・設定 3,333 件の調査履歴・マニフェストは保持します。調査範囲と今回の診断対象は異なり、除外内容は 診断/coverage.json の catalogSelection に記録しています。
+対象ソース・設定 3,333 件の調査履歴・マニフェストは保持します。調査範囲と今回の診断対象は異なり、除外内容は `diag/診断/coverage.json` の catalogSelection に記録しています。
 モデル一覧と外部連携は上部の独立タブです。「設定モデル」と「AIモデル」は Tools 接続中だけ操作できます。
 
 ## 状態インジケーター
@@ -431,30 +431,30 @@ Tools 接続中に専用タブで開始すると、`_config/AiDiy_key.json` の�
 
 `diag/モデル情報/prediction_info.mjs` が `_AIDIY/aidiy_diag/prediction_models_info.json` を生成する。判断用の生成関数を共用し、候補・スキーマ・認証条件を `decisions_models_info.json` と揃えたうえで、OpenAI APIの区分だけ実行先に合わせて `openai_decisions` から `openai_chat` へ置き換える。予測JSONに `openai_decisions` は出力しない。
 
-- 出力方式は `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat`。各区分は `{models: {モデルID: 表示名}}`。現在の候補はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。共通の `DECISION_MODEL_CANDIDATES` を使い、別の固定候補は持たない。
-- 認証済みの取得一覧に含まれるモデルだけを出力する。表示名は `YYYY/MM/DD - ID`、日付不明時は `yyyy/mm/dd - ID`。候補がない方式は省略し、全方式が空なら `{}` を保存する。公開・固定・旧保存候補からの補完はしない。
+- `openai_oauth`、`freeai_chat`、`openai_chat`、`gemini_chat` は判断用の絞り込みを共用します。`gemini_agy` には Google ログインで取得した AGY 候補を使います。続く CLI は `codex_cli`、`copilot_cli`、`aidiy_hermes`、`aidiy_pi`、`aidiy_codex` を合成 Code 一覧から追加し、`auto` / `same` や読取専用に対応しない委譲経路を除きます。各区分は `{models: {モデルID: 表示名}}` で、候補のある方式だけを書き出します。
+- 表示名は `YYYY/MM/DD - ID`、日付不明時は `yyyy/mm/dd - ID`。全方式が空なら `{}` を保存します。API方式の認証条件と AGY の保存済み候補の扱いは、下の「判断用モデル一覧」を参照してください。
 - 既存の水色の `一括取得` → `書込`、または headless / 全テスト内の共通モデル書込で更新する。保存先一覧では `prediction_models_info.json` を `decisions_models_info.json` の直前に含める。独立した取得APIや生成試行は追加しない。
-- `AiDiy_key.json` の `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OPENAI_OAUTH_MODEL` / `PREDICTION_GEMINI_AGY_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` は、方式とChat系4モデルが `auto`、CLI系が `gpt-6-luna`（Hermes / Piは `openai_oauth/gpt-6-luna`）を初期値とする。試行行のモデルは方式に対応するキーを使い、方式autoの行はモデルもautoで送る。CLI方式の候補は合成済みの `code_models_info.json` から `auto` / `same` を除いて載せ。試行はChat試行でOKになったモデルで2ターンを送ってから予測する。候補の書込では設定値を変更せず、予測も実行しない。設定はWeb / AvatarのAI設定画面で変更する。
-- 内部RESTの `aidiy_prediction_llms`（`POST /internal/prediction_llms`、MCP非公開）はこのJSONを参照する。方式も `auto` なら、候補が存在する `codex_cli` → `copilot_cli` → `aidiy_hermes` → `aidiy_pi` → `aidiy_codex` → `openai_oauth` → `gemini_agy` → `freeai_chat` → `gemini_chat` → `openai_chat` の順で1方式を選ぶ。判断側の候補区分・選択順は変更しない。
+- 方式を明示した試行行は対応する `PREDICTION_*_MODEL` を使い、方式が `auto` の行はモデルも `auto` で送ります。試行では先に成功したChatモデルで2ターンを履歴へ記録します。[予測の設定キーと初期値](<../_AIDIY/knowledge/backend_server,設定管理(conf).md#default_config-のキー構成>)
+- 内部RESTの `aidiy_prediction_llms`（`POST /internal/prediction_llms`、MCP非公開）はこのJSONを参照する。方式も `auto` なら、候補が存在する `codex_cli` → `copilot_cli` → `aidiy_hermes` → `aidiy_pi` → `aidiy_codex` → `openai_oauth` → `gemini_agy` → `freeai_chat` → `gemini_chat` → `openai_chat` の順で1方式を選ぶ。
 - 内部RESTは `project_path` を必須指定し、同じプロジェクトの過去会話から次のユーザー入力を返す。候補取得・書込だけでは予測を実行せず、Diagでは設定モデル／AIモデルの明示試行から呼び出す。Code画面の自動提案も同じ内部RESTを使い、トグルは初期OFFとする。履歴非保存などの仕様は [backend_tools 構成](../_AIDIY/knowledge/backend_tools,構成.md#次のユーザー入力予測) を参照する。
 
 ## 判断用モデル一覧
 
-`diag/モデル情報/decisions_info.mjs` が `_AIDIY/aidiy_diag/decisions_models_info.json` を生成する。既存の `*_models_info.json` 命名を使用し、`desisions_model_info.json` は作成しない。スキーマは `{openai_oauth: {models: {モデルID: 表示名}}, openai_decisions: ..., freeai_chat: ..., gemini_chat: ...}`。表示名は `YYYY/MM/DD - ID`、取得日が不明なら `yyyy/mm/dd - ID`。認証付き一覧を取得できた方式だけを含める。
+`diag/モデル情報/decisions_info.mjs` が `_AIDIY/aidiy_diag/decisions_models_info.json` を生成する。既存の `*_models_info.json` 命名を使用し、`desisions_model_info.json` は作成しない。各方式は `{models: {モデルID: 表示名}}` を持ちます。表示名は `YYYY/MM/DD - ID`、取得日が不明なら `yyyy/mm/dd - ID`。認証付き一覧を取得できた方式だけを含める。
 
 - 既存のキー確認と同じGET・ページング・proxy/TLS・制限時間・キャンセルを使い、追加の生成API試行は行わない。判断用の元一覧は公開補完前に分離する。OpenAIは既存の240日・廃止モデル除外、OAuthはAPIが返した表示対象IDのみ、GoogleはgenerateContent対応モデルから候補を作る。明らかな音声・画像・Live・埋込などの専用モデルを除く。JSON/Decisions対応の保証ではなく、実行可否はToolsの既存起動チェックで確認する。
 - 公開OpenRouter一覧・同梱キャッシュ・OAuthの固定候補・将来版や900kの合成候補・設定モデルからの補完は行わない。認証の証跡は実行中のメモリだけに保持し、キー値や指紋をJSONへ保存しない。
-- 書込時に現在のキー（OpenAIは組織も）またはOAuthトークン・アカウントが取得時と一致することを確認する。キー変更・削除、一覧取得失敗、旧JSONだけが残っている状態は候補にしない。個別確認後は同じDiag実行内で保持する他方式の有効な取得結果を使うが、再起動や設定再読込後は再確認が必要。
+- OpenAI / Gemini API / FreeAI は、書込時に現在のキー（OpenAIは組織も）またはOpenAI OAuthのトークン・アカウントが取得時と一致することを確認します。再起動・設定再読込後は再確認が必要です。AGY は「Gemini (Agy)」で取得した候補を使い、今回未試験なら正常な保存済み一覧を利用します。
 - FreeAI/Geminiは判断実行と同じ優先キーを使い、優先キー未設定時だけ他方の認証付き取得結果を代用する。キーが設定済みで認証に失敗した場合は代用しない。
 - 空の方式は省略し、全方式が空なら `{}` を保存する。設定・autoの選択順・方式別既定値は書き換えない。生成確認済みの利用可能モデルとこの候補一覧を混同しない。
 - headlessと画面のモデル書込は共通処理で生成し、保存先一覧にもファイル名を含める。Pythonの読込口は `conf_models.get_decisions_models()`。Web/Avatar設定画面もこの一覧を利用し、取得済み候補と設定保持値を区別して表示する。
 - モック検証: `node --test frontend_diag/checks/decisions-info.check.mjs`。4方式、認証変更、公開/固定/旧保存候補の排除、キー代用、失敗・空一覧、共通書込とheadlessの保存先を確認する。
 
-### 判断系4方式の候補管理（2026-10-18）
+### 判断系の候補管理
 
 autoの優先順は `openai_oauth` → `gemini_agy`（テキストのみ）→ `freeai_chat` → `gemini_chat` → `openai_decisions`。起動チェックに成功した方式だけを優先対象にする。
 
-判断系の候補方針は `frontend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
+API方式とOpenAI OAuthの候補は `DECISION_MODEL_CANDIDATES` で絞ります。OpenAI両方式は `gpt-6-luna`、FreeAI / Gemini API は `gemini-4-hydrogen` を候補にします。AGY は `agy models` の取得結果が候補です。
 
 判断の既定値に使う `gemini-4-hydrogen` は[Googleの明示モデルID](https://aistudio.google.com/docs/models/gemini-4-hydrogen)です。モデルIDを推測・合成せず、明示設定の latest alias は書き換えません。[latest](https://ai.google.dev/gemini-api/docs/models) は安定版専用ではなく、その解決先をこの実装で断定しません。
 
@@ -468,9 +468,9 @@ Diagは認証付きGET一覧に候補配列のIDそのものがある方式だ�
 
 ## 判断モデルの手動試行
 
-設定モデル動作確認のLIVE直後に `DECISION / 挨拶の丁寧さ` を表示する。個別「テスト」と全体「動作確認」の両方で、既存MCP `/aidiy_decisions_check/mcp` の `decisions_check` を呼ぶ。HTTP `/check` への代替直結は行わない。Tools接続中の明示操作に限定し、headless・起動・全診断では実行しない。
+設定モデル動作確認のPREDICTION直後に `DECISION / 挨拶の丁寧さ` を表示する。個別「テスト」と全体「動作確認」の両方で、既存MCP `/aidiy_decisions_check/mcp` の `decisions_check` を呼ぶ。HTTP `/check` への代替直結は行わない。Tools接続中の明示操作に限定し、headless・起動・全診断では実行しない。
 
-`DECISION_AI_NAME` と方式別 `DECISION_OPENAI_MODEL` / `DECISION_OPENAI_OAUTH_MODEL` / `DECISION_GEMINI_AGY_MODEL` / `DECISION_GEMINI_MODEL` / `DECISION_FREEAI_MODEL` が不足時はauto。方式が明示されている試行行は対応する方式別値を使う。方式autoの行はモデルもautoで送り、Toolsで方式とモデルを解決する。autoの方式順はOAuth → FreeAI → Decisions API → Gemini。結果には実効モデルを表示し、設定ファイルへは書き戻さない。
+設定モデルの試行行は、方式を明示した場合に対応する `DECISION_*_MODEL` を使います。設定キーが不足している場合は AGY / Gemini / FreeAI が `gemini-4-hydrogen`、OpenAIの2方式が `auto` です。方式が `auto` の行はモデルも `auto` で送り、Tools が方式とモデルを解決します。結果には実際に使ったモデルを表示します。[判断の方式選択と設定](../_AIDIY/knowledge/backend_server,backend_tools,AI判断追加手順.md#構成と切り替え)
 
 入力は「おはよう」、質問は挨拶としての丁寧さ、choice名は `politeness`、選択肢は `high / medium / low`。3値すべてを正常な選択として受け付け、特定値を正解とはしない。MCPのJSON内のstatus、回答名・型・選択値、3候補の確率分布・合計、confidenceを検証する。不正JSON・欠落・未知選択肢・通信エラーはNG。結果詳細に選択値と検証済みJSON、実際の実行モデルを表示する。
 
@@ -521,7 +521,7 @@ Hermes・外部CLIは、同じDiag・同じプロジェクトでもクリック�
 
 素材の著作権ライセンスとブランド・商標の条件は別です。Codex / Claude Code画像はベンダー公式配布ではなく第三者のLobeHub素材です。AiDiyは各社・各開発チームの提供・承認・提携を示しません。MIT等の全文と素材ごとの制約は `LICENSE_ICONS.md` に保持し、商標利用の包括的な許諾とは記載しません。
 
-自動検証は `checks/cli-launch.check.mjs`、`checks/cli-launch-state.check.mjs`、`checks/mini-cli-ui.check.cjs`、`frontend_ide/checks/cli-launch.test.mjs`、`frontend_ide/checks/cli-terminal.test.mjs`、`frontend_ide/checks/cli-parallel-lifecycle.test.mjs` を使います。合成プロセス・WebSocket fixture・Vueイベントで全タブの切替、ミニの確認なし起動、成功説明の非表示、連続・同時起動、部分失敗、個別終了、ポート・セッション分離、引数と作業パスを検証し、実CLIの認証・有料API・自動作業は実行しません。実Windows窓・DPI・実CLIバージョンとの互換性は別途確認してください。
+自動検証は `checks/cli-launch.check.mjs`、`checks/cli-launch-state.check.mjs`、`checks/mini-cli-ui.check.cjs`、`frontend_ide/checks/cli-launch.test.mjs`、`frontend_ide/checks/cli-term.test.mjs`、`frontend_ide/checks/cli-owner-launch.test.mjs`、`frontend_ide/checks/cli-parallel-lifecycle.test.mjs` を使います。合成プロセス・WebSocket fixture・Vueイベントで全タブの切替、ミニの確認なし起動、成功説明の非表示、連続・同時起動、部分失敗、個別終了、ポート・セッション分離、引数と作業パスを検証し、実CLIの認証・有料API・自動作業は実行しません。実Windows窓・DPI・実CLIバージョンとの互換性は別途確認してください。
 
 
 ## アイコン化ランチャー
@@ -583,7 +583,7 @@ npm --prefix frontend_diag/ui run check
 
 「Tools」はCoreへログインして使います。各行の「テスト」と右上の「一括テスト」で、有効・利用可能なToolを試験します。一括は順次実行し、失敗後も次の項目へ進みます。未導入・無効は名前の直後、テスト結果は右端の共通バッジに表示します。初期表示は「未実施」で、利用可能というだけでは「OK」にしません。結果は画面内で保持し、画面全体の再読み込み・再ログイン後の永続復元は行いません。
 
-生成・AI系の8項目は説明APIの疎通確認です。生成やAI実行の成功とは区別します。他の項目はモニター数、SELECT 1、ログ件数、構文、差分件数、OBSシーン数、短い無音処理、通知音、要員数、ウィンドウ数、専用Chromeの起動を確認します。PostgreSQLの接続設定やOBSの稼働など、必要な実行条件を満たさなければ失敗になります。
+代表試験は Windows で21項目、Linux / macOS で20項目あります。`aidiy_dialy_control` はツール一覧を取得して検索メソッドの登録を確認します。利用者の日誌は読み書きしません。生成・AI系の8項目は説明APIの疎通確認です。生成やAI実行の成功とは区別します。他の項目はモニター数、SELECT 1、ログ件数、構文、差分件数、OBSシーン数、短い無音処理、通知音、要員数、ウィンドウ数、専用Chromeの起動を確認します。PostgreSQLの接続設定やOBSの稼働など、必要な実行条件を満たさなければ失敗になります。
 
 Toolsの一括試験は、通常タブの「全テスト」および `--headless` とは独立しています。詳細は [AIモデル・Tools編](../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_diag,AIモデル・Tools編.md) を参照してください。
 
@@ -601,13 +601,21 @@ Toolsの一括試験は、通常タブの「全テスト」および `--headless
 
 Memo の本体・一覧画面は表示しません。通常の Diag 起動では、起動フォルダと選択プロジェクトの `_AIDIY/aidiy_memo/` にある保存済み付箋を、1枚ずつ独立した最前面ウィンドウとして復元します。メモがなければ何も開きません。`--headless` では付箋を起動しません。
 
-- 常時表示するのはタイトルと本文だけ。タイトル・本文は付箋フォームからフォーカスが外れた時に保存します。タイトルと本文の間の移動では保存しません。位置・サイズ・色・画像は変更時に保存しますが、編集中の文字は混ぜません。終了・プロジェクト切替では未保存の文字も保存完了を待ちます。
-- タイトル・本文が両方空の新規付箋は、フォーカスが外れるとファイルを作らず閉じます。保存済み付箋を空にしても削除しません。
+- 付箋にはタイトル、期限ボタン、本文を表示します。タイトル・本文は付箋フォームからフォーカスが外れた時に保存します。タイトルと本文の間の移動では保存しません。位置・サイズ・色・画像は変更時に保存しますが、編集中の文字は混ぜません。終了・プロジェクト切替では未保存の文字も保存完了を待ちます。
+- タイトル・本文・画像・期限がすべて空の新規付箋は、フォーカスが外れるとファイルを作らず閉じます。保存済み付箋を空にしても削除しません。
 - Diag タイトルのアイコン化ボタン右の「+メモ」、アイコン化中は右クリックメニューの「+メモ」で新規作成します。選択中プロジェクトを優先し、未選択なら起動フォルダに保存します。
 - タイトル欄の上部・右側のヘッダー余白を押すと待機なしで移動、ウィンドウの端をドラッグしてサイズ変更。通常の文字選択ドラッグとは区別します。最下部にマウスを置くとパステル色を選べます。
-- 新規は1件1JSONにタイトル・本文・位置・サイズ・色を保存します。既存JSONとUTF-8 `.txt` / `.md` は無破壊で読み込みます。外部編集との競合は上書きせず、入力を残してエラーを表示します。
+- 新規は1件1JSONにタイトル・本文・画像・期限・位置・サイズ・色を保存します。既存JSONとUTF-8 `.txt` / `.md` は無破壊で読み込みます。外部編集との競合は上書きせず、入力を残してエラーを表示します。
 - プロジェクトを切り替えても、開いている付箋は元の保存先に保存します。アプリ終了時は保存し、次回の通常起動で復元します。
 - Web起動では各付箋を別ページで表示します。OSの最前面表示・位置復元はElectron版で利用できます。
+
+### 付箋の期限
+
+タイトル右端の時計を押し、ローカル時刻で日付・時・分を選んで「保存」を押します。分は `00 / 15 / 30 / 45` から選びます。未設定時の初期値は次の正時です。設定した期限はタイトル横に `MM/DD HH:mm` で表示され、時計から変更・解除できます。期限だけを設定した付箋も保存・復元されます。
+
+期限の15分前から期限欄の枠を水色の光が回り、到達すると付箋の背景も明滅します。OSの「動きを減らす」が有効でも、光の回転と明滅は続きます。期限のお知らせは開いている付箋の表示で行います。通知音やOS通知はありません。
+
+設定・解除はすぐに保存し、期限は UTC で記録します。既存 `.txt` / `.md` の期限は付随する設定ファイルに保存します。
 
 ### 単体起動
 

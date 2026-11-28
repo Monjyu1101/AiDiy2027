@@ -42,7 +42,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `aidiy_notification_sounds` | 通知音のローカル再生（scene 別の開始 / 終了 / 注意音、`tts` シーンは text_to_speech で読み上げ合成） |
 | `aidiy_code_agents` | AI コードエージェント実行（CodeAI CLI 経由） |
 | `aidiy_chat_llms` | AI チャット LLM 実行（AIチャット.py 系 ChatAI 経由 / `aidiy_code_agents` 互換 IF） |
-| `aidiy_decisions_check` | AI判断（OpenAI Decisions API / OAuth Responses JSON Schema / FreeAI・Gemini JSON Chat）の共通インターフェース |
+| `aidiy_decisions_check` | AI判断（OpenAI Decisions API / OAuth Responses JSON Schema / FreeAI・Gemini JSON Chat / Google ログイン経由の AGY）の共通インターフェース |
 | `aidiy_task_agents` | backend_taskteam の `/task` API への AIタスク非同期投入。`submit`の`task_id`は通常省略し、外部IDを引き継ぐ場合だけ指定。`project_path` / `ai_name` / `ai_model_plan` / `ai_model_do` / `ai_model_check` も通常省略（null）で、統合サーバーが更新最終レコードの値 → 規定値で補完 |
 | `aidiy_team_agents` | backend_taskteam の `/team` API への AIチーム依頼投入。`submit`は`Aチーム依頼`を準備開始で登録し、依頼IDは統合サーバーが自動採番。`project_path` / `team_ai_*` / `task_ai_*` は通常省略（null）で、統合サーバーが更新最終レコードの値 → 規定値で補完 |
 | `aidiy_dialy_control` | 指定利用者の日誌検索、作業・明細の登録 / 変更 / 削除（Apps API） |
@@ -98,8 +98,17 @@ OpenAI SDK / Ollama クライアントの `base_url` に `http://127.0.0.1:8095/
 | `tools_proc/task_agents.py` / `tools_proc/tools_task_agents.py` | backend_taskteam の `/task` API への AIタスク投入 |
 | `tools_proc/team_agents.py` / `tools_proc/tools_team_agents.py` | backend_taskteam の `/team` API への AIチーム依頼投入 |
 | `tools_proc/taskteam_auth.py` | TaskTeam API 向け内部認証。資格情報は要求ごとに読み、loopback のみに送る |
+| `tools_proc/tools_diary_control.py` | `aidiy_dialy_control` の MCP / HTTP 登録、Apps の日誌 API への転送、通常認証と直接 loopback 内部認証の判定 |
 | `tools_proc/tools_settings.py` / `tools_proc/tools_management.py` | `_config/AiDiy_tools.json` の非秘密設定、認証付き管理 API、利用可否の制御 |
 | `tools_proc/windows_control.py` / `tools_proc/tools_windows_control.py` | Windows デスクトップ操作制御（マウス/キーボード/ウィンドウ/プロセス/クリップボード/UI Automation） |
+| `tools_proc/notification_sounds.py` | 通知音のローカル再生 |
+| `tools_proc/tools_*.py`（`tools_agents` / `tools_backup` / `tools_chrome` / `tools_db` / `tools_desktop` / `tools_dev` / `tools_ffmpeg` / `tools_media` / `tools_notification_sounds` / `tools_obs`） | 各 MCP のツール登録と HTTP ルート（`tools_db` は sqlite / postgres、`tools_dev` は logs / code_check、`tools_media` は画像・動画・音声認識・音声合成をまとめて登録） |
+| `tools_proc/conversation_history.py` | 通常の Chat / Code の MCP・REST 実行だけを共通会話履歴へ記録する境界 |
+| `tools_proc/harness_cli.py` | AiDiy ハーネスから外部 CLI へ委譲する共通 JSONL 入口（サーバー・DB・Hermes を起動しない） |
+| `tools_proc/ide_browser_session.py` | IDE が所有する Browser への接続（Chrome の新規起動・IDE プロセス停止は行わない） |
+| `tools_proc/live_model_check.py` | Diag 専用の非公開 Live 試行（MCP 登録・設定書き込み・会話文脈なし） |
+| `tools_proc/prediction_privacy.py` | 予測呼出し中だけ本文・例外を通常ログへ残さない制御 |
+| `tools_proc/media_output.py` / `tools_proc/request_lifetime.py` / `tools_proc/tool_availability.py` | メディア返却（base64 / ファイル）の共通規則、HTTP 呼び出し元の切断に合わせた処理終了、登録を維持した利用可否の通知 |
 
 ## アーキテクチャ
 

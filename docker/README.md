@@ -39,7 +39,7 @@ http://127.0.0.1:8098/docs  # Apps API (M系, T系, V系, S系)
 
 ## この構成に含まれないサービス
 
-- `backend_tools`（`8095`、MCP は Windows 20 / Linux・macOS 19 サーバー、Windows Control は Windows のみ: `aidiy_chrome_devtools` / `aidiy_desktop_capture` / `aidiy_sqlite` / `aidiy_postgres` / `aidiy_logs` / `aidiy_code_check` / `aidiy_backup` / `aidiy_image_generation` / `aidiy_movie_generation` / `aidiy_speech_to_text` / `aidiy_text_to_speech` / `aidiy_obs_studio_control` / `aidiy_ffmpeg_control` / `aidiy_notification_sounds` / `aidiy_code_agents` / `aidiy_chat_llms` / `aidiy_decisions_check` / `aidiy_task_agents` / `aidiy_team_agents` / `aidiy_windows_control`）は、この Docker ガイドの構成には含めていません。ブラウザ自動操作などの MCP は、通常のローカル開発手順で `backend_tools` を別途扱う前提です。
+- `backend_tools`（`8095`）はローカルで別途起動します。ブラウザ自動操作や日誌 MCP の接続先と利用条件は [MCP の構成](../_AIDIY/knowledge/backend_tools,構成.md) を参照してください。
 - `backend_taskteam`（`8093`、AIタスク実行 + AIチーム）と `backend_local`（`8096`、ローカル LLM）も含みません。Task / Team は `frontend_ide` の独立アプリであり、この構成にその画面・バックエンドはありません。
 - Diag、Avatar、IDEの単独アプリ、Channels、Hermes CLIもイメージには含めません。nginx のAPI転送は `/core/`・`/apps/`・`/ws/` で、`/mcp/`・`/task/`・`/team/` は未定義です。
 

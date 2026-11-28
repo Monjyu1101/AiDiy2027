@@ -33,7 +33,7 @@ AiDiy の `aidiy_hermes` エントリでは、この解決より前に `_load_ai
 Hermes の `/model` は `_AIDIY/aidiy_diag/hermes_models_info.json` を使用します。`aidiy_diag` のモデル一覧取得・保存時に、既存の Chat / Code 合成一覧と一緒に生成されます。AIチャットパネルの `chat_models_info.json` や Code ダイアログの `code_models_info.json` の構成・絞り込みは変更しません。
 
 - `gemini` / `freeai` / `openrt_chat` / `openai_chat` は Chat 一覧（OpenRouter の `openrt_chat` / `openrt_free` は Hermes 内部では同じ `openrouter` インターフェース）のモデルID・表示名・順序を元にします。Hermes独自の50件上限・240日制限・最新主版限定・他社一覧との交差による絞り込みは追加しません。
-- `hermes_models_info.json` のキーは Chat / Code 一覧と同じ区分名（`gemini_chat` / `freeai_chat` / `openrt_chat` / `openrt_free` / `openai_chat` / `openai_oauth` / `xai_oauth` / `claude_chat` / `ollama_chat` / `local_chat` / `claude_cli` / `antigravity_cli` / `codex_cli` / `copilot_cli` / `opencode_cli` / `grok_cli`）で、`openai_oauth` は `openai_chat` の直後です。
+- `hermes_models_info.json` のキーは Chat / Code 一覧と同じ区分名（`gemini_chat` / `freeai_chat` / `openrt_chat` / `openrt_free` / `openai_chat` / `openai_oauth` / `xai_oauth` / `claude_chat` / `ollama_chat` / `local_chat` / `claude_cli` / `antigravity_cli` / `agy_cli` / `codex_cli` / `copilot_cli` / `opencode_cli` / `grok_cli`）で、`openai_oauth` は `openai_chat` の直後です。
 - `/model` の候補はすべてこのファイルから出します（API は呼びません）。旧来のライブ取得と、`code_models_info.json` への退避は削除しました。ファイルが無い・該当区分が無い場合は、取得・保存の案内だけを出します。
 - Ollama のスラッグは本体と同じ `ollama_chat` です（旧名 `ollama` は受け付けません）。`ollama_chat` は Ollama から取得できた（候補が1件以上ある）ときだけ、`local_chat` は backend_local の固定候補なので常に入ります。
 - `openai_oauth` は OpenAI OAuth が設定済みのとき、`xai_oauth` は Grok の OAuth 取得が OK / PASS で設定済みのときだけ入ります。`xai_oauth` は Grok の固定候補（CLI 導入有無に左右されず、`same` なし）です。
@@ -107,7 +107,8 @@ AiDiy の `/model` picker と `--provider` では、API provider に加えて次
 | Provider slug | 実行コマンド |
 |---------------|--------------|
 | `claude-code` | `claude` |
-| `antigravity-cli` | `agy` |
+| `antigravity-cli` | `agy`（通常の `antigravity_cli` 区分） |
+| `agy_cli` | `agy`（保存済みの Google ログインを使う `agy_cli` 区分） |
 | `codex-cli` | `codex` |
 | `copilot-cli` | `copilot` |
 | `opencode` | `opencode` |

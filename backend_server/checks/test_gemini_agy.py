@@ -25,6 +25,7 @@ _FAKE = r'''
 import json, os, sys, time
 from pathlib import Path
 args = sys.argv[1:]
+sys.stdin.reconfigure(encoding="utf-8")
 def arg(name):
     return args[args.index(name) + 1]
 assert not any(name in os.environ for name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "AGY_ADC_AUTH", "GOOGLE_APPLICATION_CREDENTIALS"))
@@ -74,7 +75,6 @@ class AGYPredictionConfigTests(unittest.TestCase):
                 self.assertEqual(prediction._resolve("auto", "auto"), ("gemini_agy", "configured-agy"))
 
 
-@unittest.skipIf(os.name == "nt", "仮 CLI の POSIX ランチャー")
 class AGYProcessTests(unittest.IsolatedAsyncioTestCase):
     async def test_prediction_reuses_isolated_agy_text_path(self):
         prediction = PredictionLLM()
@@ -84,9 +84,21 @@ class AGYProcessTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        path = Path(directory.name) / "agy"
+        path = Path(directory.name) / ("agy.exe" if os.name == "nt" else "agy")
         path.write_text(f"#!{sys.executable}\n" + _FAKE, encoding="utf-8")
-        path.chmod(0o700)
+        if os.name == "nt":
+            # 公式の実行ファイル探索・親の監視・標準入出力はそのまま使う。
+            # Windowsはshebangを実行しないので、試験用ファイルだけをPythonで起動する。
+            spawn = asyncio.create_subprocess_exec
+
+            async def start_fixture(*argv, **options):
+                child = argv.index("--") + 1
+                self.assertEqual(Path(argv[child]), path)
+                return await spawn(*argv[:child], sys.executable, *argv[child:], **options)
+
+            self.enterContext(patch.object(asyncio, "create_subprocess_exec", start_fixture))
+        else:
+            path.chmod(0o700)
         self.enterContext(patch.dict(os.environ, {
             "PATH": f"{directory.name}{os.pathsep}{os.environ.get('PATH','')}",
             "GEMINI_API_KEY":"fake", "GOOGLE_API_KEY":"fake", "AGY_ADC_AUTH":"true",

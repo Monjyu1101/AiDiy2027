@@ -33,28 +33,37 @@ test('開始ボタンは大きな操作領域・狭幅の縦並び・低い画�
  assert.match(css,/\.ide-start-actions button:focus-visible\{outline:2px/);
 });
 function menuFixture(mode='offline',active=true,connected=false){
- const context={ref:value=>({value}),desktop:false,window:{},cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},openWindow(){},openPanel(){},openNavigation(){}};
- vm.runInNewContext(app.slice(app.indexOf('const browserAvailable='),app.indexOf("provide('browserAvailable'"))+app.slice(app.indexOf('const launchText='),app.indexOf('async function openWindow'))+';globalThis.desktopItems=desktopLaunchItems;globalThis.webItems=panelLaunchItems;globalThis.available=browserAvailable;',context);return context;
+ const context={ref:value=>({value}),desktop:false,window:{},cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},gitAvailable:{value:false},openWindow(){},openPanel(){},openNavigation(){}};
+ const browser=app.slice(app.indexOf('const browserAvailable='),app.indexOf("provide('browserAvailable'"));
+ const git=app.slice(app.indexOf('const gitTitle='),app.indexOf('const navigationWindows='));
+ const menu=app.slice(app.indexOf('const launchText='),app.indexOf('async function openWindow'));
+ vm.runInNewContext(browser+git+menu+';globalThis.desktopItems=desktopLaunchItems;globalThis.webItems=panelLaunchItems;globalThis.available=browserAvailable;',context);
+ return context;
 }
-test('オフラインメニューはCPU・Term・Browser・CodeだけでBrowserは接続なしでも有効',()=>{
+test('オフラインでBrowserを利用でき、Gitはリポジトリがある場合に有効',()=>{
  for(const mode of ['offline','online']){
   const f=menuFixture(mode);
-  const expected=mode==='offline'?['term','browser','code','cpu']:['term','browser','navigation','code','live','avatar','task','team','cpu'];
+  const expected=mode==='offline'?['term','browser','code','git','cpu']:['term','browser','navigation','code','live','avatar','task','team','git','cpu'];
   assert.deepEqual(Array.from(f.desktopItems.value,x=>x.key),expected);
   if(mode==='offline')assert.deepEqual(Array.from(f.webItems.value,x=>x.key),expected);
   assert.equal(f.available.value,true);
-  for(const items of [f.desktopItems,f.webItems])assert.equal(items.value.find(x=>x.key==='browser').disabled,false);
+  for(const items of [f.desktopItems,f.webItems]){
+   assert.equal(items.value.find(x=>x.key==='browser').disabled,false);
+   assert.equal(items.value.find(x=>x.key==='git').disabled,true);
+  }
+  f.gitAvailable.value=true;
+  for(const items of [f.desktopItems,f.webItems])assert.equal(items.value.find(x=>x.key==='git').disabled,false);
   f.launching.value='code';assert.equal(f.desktopItems.value.find(x=>x.key==='browser').disabled,true);
   f.state.value.active=false;assert.equal(f.available.value,false);
  }
  assert.match(app,/<button v-if="state.mode==='online'" class="navigation-launch"/);
 });
 function startFixture(desktop=false){
- let resolve;const calls=[],updates=[];let layoutRefreshes=0;
+ let resolve;const calls=[],updates=[];let layoutRefreshes=0,gitRefreshes=0;
  const project={name:'別プロジェクト',path:'C:\\work\\別プロジェクト'};
- const context={state:{value:{active:true,mode:'online',startedAt:1,project}},config:{project},pending:{value:false},error:{value:''},statusError:{value:''},revision:0,desktop,refreshLayout:()=>{layoutRefreshes++;},window:{aidiyWindow:{endSession:async()=>calls.push('endSession')}},AbortSignal,update:state=>{updates.push(state);context.state.value=state;},fetch:(url,options)=>{calls.push({url,options});return new Promise(done=>{resolve=done;});}};
- vm.runInNewContext(app.slice(app.indexOf('async function start(action)'),app.indexOf('const navigationWindows='))+';globalThis.run=start;',context);
- return{context,calls,updates,get layoutRefreshes(){return layoutRefreshes;},respond:response=>resolve(response)};
+ const context={state:{value:{active:true,mode:'online',startedAt:1,project}},config:{project},pending:{value:false},error:{value:''},statusError:{value:''},revision:0,desktop,refreshLayout:()=>{layoutRefreshes++;},refreshGitAvailability:()=>{gitRefreshes++;},window:{aidiyWindow:{endSession:async()=>calls.push('endSession')}},AbortSignal,update:state=>{updates.push(state);context.state.value=state;},fetch:(url,options)=>{calls.push({url,options});return new Promise(done=>{resolve=done;});}};
+ vm.runInNewContext(app.slice(app.indexOf('async function start(action)'),app.indexOf('let gitChecking='))+';globalThis.run=start;',context);
+ return{context,calls,updates,get layoutRefreshes(){return layoutRefreshes;},get gitRefreshes(){return gitRefreshes;},respond:response=>resolve(response)};
 }
 test('開始連打は1回だけ送り、応答待ちは両ボタン無効、失敗後に再試行できる',async()=>{
  const f=startFixture();const pending=f.context.run('connect');
@@ -74,9 +83,9 @@ test('終了時は子窓を終了して初期画面へ戻し、接続を再開�
 
 test('接続開始応答の直後に配置状態を取得し、Load表示を定期確認まで待たせない',async()=>{
  const f=startFixture(true);const starting=f.context.run('connect');
- assert.equal(f.layoutRefreshes,0);
+ assert.equal(f.layoutRefreshes,0);assert.equal(f.gitRefreshes,0);
  f.respond({ok:true,json:async()=>({active:true,mode:'online'})});await starting;
- assert.equal(f.context.pending.value,false);assert.equal(f.layoutRefreshes,1);
+ assert.equal(f.context.pending.value,false);assert.equal(f.layoutRefreshes,1);assert.equal(f.gitRefreshes,1);
 });
 
 

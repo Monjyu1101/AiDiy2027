@@ -204,13 +204,12 @@ const router = createRouter({
     ]
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
     // 日本語URLのリロード対応: エンコードされたパスが来た場合、デコードしてリダイレクト
     try {
         const decodedPath = decodeURIComponent(to.path)
         if (decodedPath !== to.path) {
-            next({ path: decodedPath, query: to.query, hash: to.hash })
-            return
+            return { path: decodedPath, query: to.query, hash: to.hash }
         }
     } catch (e) {
         console.error('URL Decode Error:', e)
@@ -219,8 +218,7 @@ router.beforeEach(async (to, _from, next) => {
     const authStore = useAuthStore()
     if (to.meta.requiresAuth) {
         if (!authStore.token) {
-            next('/ログイン')
-            return
+            return '/ログイン'
         }
         if (authStore.user) {
             // キャッシュ済み利用者がいれば遷移をブロックせず、認証確認は裏で行う
@@ -229,12 +227,10 @@ router.beforeEach(async (to, _from, next) => {
         } else {
             await authStore.ensureAuth()
             if (!authStore.user) {
-                next('/ログイン')
-                return
+                return '/ログイン'
             }
         }
     }
-    next()
 })
 
 const BASE_TITLE = 'AiDiy'

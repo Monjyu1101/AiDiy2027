@@ -15,17 +15,17 @@ AiDiy は、日本語を第一言語とするフルスタック業務システ�
 - Command Hermes: `aidiy_hermes` コード支援 CLI（常駐なし）。
 - Command Pi: `aidiy_pi` コード支援 CLI（MIT の Pi を同梱、常駐なし）。Hermes と同じ区分名でモデル一覧・キー・OAuth・MCP を使う。
 - Command Codex: `aidiy_codex` コード支援 CLI（Apache-2.0 の OpenAI Codex を同梱しコンパイルして `~/.aidiy/bin` に配置、常駐なし）。Hermes / Pi と同じ区分名で `--model <区分>/<モデル名>` を使う。
-- Backend MCP: Windows は20個、Linux / macOS は19個の MCP サーバー（Windows Control は Windows のみ）（Chrome / Desktop / SQLite / PostgreSQL / Logs / Code Check / Backup / Image Generation / Movie Generation / Speech-to-Text / Text-to-Speech / OBS Studio Control / FFmpeg Control / Notification Sounds / Code Agents / Chat LLM / Decisions Check / Task Agents / Team Agents / Windows Control）（ポート 8095）。
+- Backend Tools: MCP サーバーは Windows で21、Linux / macOS で20（日誌 MCP を含み、Windows Control は Windows のみ）。OpenAI / Ollama 互換の Chat Completions も提供（8095）。
 - Backend Local: OpenAI 互換の Gemma ローカル推論サーバー（ポート 8096）。
 - Backend TaskTeam: AIタスク実行 + 定期タスクと複数AIエージェントのチーム活動を統合したサーバー（ポート 8093）。
 - Frontend Diag: `aidiy_diag` の環境診断・設定・起動管理（ポート自動割り当て）。付箋メモ `aidiy_memo` も同梱。
-- Frontend Web: Vue 3 + Vite + TypeScript（ポート 8090）。
+- Frontend Web: Vue 3 + Vite + TypeScript の業務 UI。T日誌の一覧・編集は Apps の日誌 API と専用 SQLite DB を利用（8090）。
 - Frontend Avatar: Electron / Web デュアルモードの AI Avatar UI（ポート 8092）。
 - Frontend VS Code: VS Code 拡張 2 種（AIコアの各 Code CLI を選択し、未接続時は Hermes / Pi を選択して直接実行する AiDiy (Code)、AIコアへ接続する音声会話の AiDiy (Live)）と単独起動版（常駐なし）。どちらも開発スペース（`aidiy_ide`）の部品としても動作。
 - Frontend Discord: Hermes / Pi チャットと AIコア Live 音声会話をつなぐ任意起動の Discord Bot（接続パネル付き）。
 - Frontend Slack: HTTPS の定期取得で Hermes / Pi チャットへ接続する任意起動の Slack Bot（音声なし）。Discord 版と双子の接続パネルで、両方をそろえて保守する。
 - Frontend Navi: `aidiy_navi` の開発案内。ナビ・再評価は読み取り専用。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、再評価を繰り返す。IDE の「＋ Navi」からも開ける。
-- Frontend IDE: 開発スペース（宇宙をテーマにした IDE 開発環境）。宇宙表示・左側エクスプローラー・読み取り専用ビューアの AiDiy IDE。Code / Live を部品として呼び出せる（ポート自動割り当て、全体のセットアップ・起動・クリーンアップに組み込み済み）。
+- Frontend IDE: 開発スペース（宇宙をテーマにした IDE 開発環境）。宇宙表示・左側エクスプローラー・読み取り専用ビューアの AiDiy IDE。Code / Live や Git パネルを開ける。Git パネルは `aidiy_git` で単独起動もできる（ポート自動割り当て）。
 - AI コア: チャット、音声、画像、ファイル、code1〜code6 のコード支援パネル。
 - AIタスク: 要求を AI が明細へ分解し Code CLI で自動実行する画面と実行基盤。
 - AIチーム: 複数の AI エージェントが目標を共有し、依頼と作業ループで協働する画面と実行基盤。

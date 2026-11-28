@@ -99,7 +99,7 @@ frontend_web/public/Xビデオ/
 |------|------|
 | `source_documents` | どの文書 / 実装を根拠にしたか。例: `AGENTS.md`, `backend_tools/AGENTS.md` |
 | `source_summary` | そのシーンで表現すべき事実の短い要約 |
-| `factual_bullets` | 画像に反映すべき具体要素。例: `Windows 20 / Linux・macOS 19 MCP`, `port 8095`, `Web/Electron 両対応` |
+| `factual_bullets` | 画像に反映すべき具体要素。例: `Windows 21 / Linux・macOS 20 MCP`, `port 8095`, `Web/Electron 両対応` |
 | `forbidden_elements` | 入れてはいけない誤情報。例: `未実装の製品ロゴ`, `実態にない画面構成` |
 
 例:
@@ -111,7 +111,7 @@ frontend_web/public/Xビデオ/
     "AGENTS.md",
     "backend_tools/AGENTS.md"
   ],
-  "source_summary": "backend_tools は port 8095 上で MCP SDK 2.x の Windows 20 / Linux・macOS 19 個の MCPServer を同居させるアプリケーション。",
+  "source_summary": "backend_tools は port 8095 上で MCP SDK 2.x の Windows 21 / Linux・macOS 20 個の MCPServer を同居させるアプリケーション。",
   "factual_bullets": [
     "Chrome DevTools",
     "desktop_capture",

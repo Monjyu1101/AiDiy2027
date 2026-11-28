@@ -138,7 +138,7 @@ const predictionResolvedAi = computed(() => selections.predictionAi === 'auto'
       const models = predictionCatalog.value[provider] || {};
       const configured = predictionModels.PREDICTION_GEMINI_AGY_MODEL || geminiPurposeDefault('PREDICTION_GEMINI_AGY_MODEL');
       return Object.keys(models).length > 0 &&
-        (provider !== 'gemini_agy' || configured === 'auto' || Object.hasOwn(models, configured));
+        (provider !== 'gemini_agy' || configured === 'auto' || Object.prototype.hasOwnProperty.call(models, configured));
     }) || ''
   : selections.predictionAi);
 const predictionFields = [

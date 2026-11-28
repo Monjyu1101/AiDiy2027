@@ -6,23 +6,55 @@
 // 完了した総合テストのMarkdownを、画像・折りたたみ欄を含むPDFにする。
 // node docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs <docs/セルフテスト、操作ガイド内のmd名> ...
 // PDFは元のMarkdownと同じフォルダへ、拡張子だけを.pdfに替えて保存する。
-import {readFile,mkdir,writeFile,access} from 'node:fs/promises';
-import {resolve,join,basename,dirname,sep} from 'node:path';
+import {readFile,mkdir,mkdtemp,rm,writeFile,access,rename} from 'node:fs/promises';
+import {resolve,join,relative,basename,dirname,sep,delimiter} from 'node:path';
+import {existsSync} from 'node:fs';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const knowledge=join(root,'docs','セルフテスト、操作ガイド');
-const runtime=process.env.AIDIY_DOCUMENT_NODE_MODULES||join(process.env.USERPROFILE,'.cache','codex-runtimes','codex-primary-runtime','dependencies','node','node_modules');
+const runtimeCandidates=[
+ join(process.env.USERPROFILE,'.cache','codex-runtimes','codex-primary-runtime','dependencies','node','node_modules'),
+ ...(process.env.PATH||'').split(delimiter).filter(path=>/[\\/]dependencies[\\/]node[\\/]bin[\\/]?$/i.test(path)).map(path=>resolve(path,'..','node_modules'))
+];
+const runtime=process.env.AIDIY_DOCUMENT_NODE_MODULES||runtimeCandidates.find(path=>existsSync(join(path,'playwright-core','index.mjs'))&&existsSync(join(path,'pdf-lib')));
+if(!runtime)throw Error('playwright-core と pdf-lib を含む node_modules を AIDIY_DOCUMENT_NODE_MODULES に指定してください。');
 const require=createRequire(join(root,'frontend_ide','package.json'));
 const MarkdownIt=require('markdown-it');
+const {PDFDocument,PDFName,PDFString,PDFHexString}=require(join(runtime,'pdf-lib'));
 const {chromium}=await import(pathToFileURL(join(runtime,'playwright-core','index.mjs')).href);
 const sources=process.argv.slice(2);if(!sources.length)throw Error('対象のmd名を指定してください');
-const temp=join(root,'tmp','pdfs');
-await mkdir(temp,{recursive:true});
+const outputPdfs=new Set(sources.map(name=>resolve(knowledge,name).replace(/\.md$/,'.pdf')));
 const md=new MarkdownIt({html:true,linkify:true});
 const chrome=join(process.env.PROGRAMFILES,'Google','Chrome','Application','chrome.exe');await access(chrome);
-const browser=await chromium.launch({executablePath:chrome,headless:true});
+// Chromium はローカル HTML のリンクを file:///... に展開する。
+// PDF の注釈だけを配布フォルダ基準へ戻し、URL のエスケープと見出しを保つ。
+async function portablePdf(bytes,directory){
+ const document=await PDFDocument.load(bytes,{updateMetadata:false});
+ for(const page of document.getPages()){
+  const annotations=page.node.Annots();
+  if(!annotations)continue;
+  for(const reference of annotations.asArray()){
+   const annotation=document.context.lookup(reference);
+   const action=annotation.lookup(PDFName.of('A'));
+   const uri=action?.lookup(PDFName.of('URI'));
+   if(!(uri instanceof PDFString||uri instanceof PDFHexString))continue;
+   const value=uri.decodeText();
+   if(!value.startsWith('file:'))continue;
+   const url=new URL(value);
+   const target=fileURLToPath(url);
+   if(!outputPdfs.has(target))await access(target);
+   const path=relative(directory,target).split(sep).map(encodeURIComponent).join('/');
+   action.set(PDFName.of('URI'),PDFString.of(path+url.search+url.hash));
+  }
+ }
+ return document.save();
+}
+const staging=join(root,'tmp','pdfs');await mkdir(staging,{recursive:true});
+const temp=await mkdtemp(join(staging,'render-'));
+let browser;
 try{
+ browser=await chromium.launch({executablePath:chrome,headless:true});
  for(const name of sources){
   const source=resolve(knowledge,name);if(!source.startsWith(knowledge+sep)||!source.endsWith('.md'))throw Error('docs/セルフテスト、操作ガイド内のMarkdownを指定してください');
   let html=md.render(await readFile(source,'utf8'));
@@ -62,7 +94,10 @@ try{
   const images=await page.evaluate(async()=>{await Promise.all([...document.images].map(async i=>{try{await i.decode();}catch{throw Error('画像を読み込めません: '+i.src);}}));return [...document.images].map(i=>({src:i.src,ok:i.naturalWidth>0}));});
   if(images.some(i=>!i.ok))throw Error('読めない画像があります');
   const pdf=join(dirname(source),basename(source,'.md')+'.pdf');
-  await page.pdf({path:pdf,format:'A4',printBackground:true,preferCSSPageSize:true,displayHeaderFooter:true,headerTemplate:'<span></span>',footerTemplate:'<div style="font-size:8px;width:100%;margin:0 16mm;color:#637580;display:flex;justify-content:space-between"><span>AiDiy 総合テスト実施記録</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>'});
+  const bytes=await page.pdf({format:'A4',printBackground:true,preferCSSPageSize:true,displayHeaderFooter:true,headerTemplate:'<span></span>',footerTemplate:'<div style="font-size:8px;width:100%;margin:0 16mm;color:#637580;display:flex;justify-content:space-between"><span>AiDiy 総合テスト実施記録</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>'});
+  const staged=join(temp,basename(pdf));
+  await writeFile(staged,await portablePdf(bytes,dirname(pdf)));
+  await rename(staged,pdf);
   console.log(JSON.stringify({pdf,images:images.length}));await page.close();
  }
-}finally{await browser.close();}
+}finally{try{await browser?.close();}finally{await rm(temp,{recursive:true,force:true});}}

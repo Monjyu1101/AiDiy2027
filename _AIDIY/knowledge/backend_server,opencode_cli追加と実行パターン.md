@@ -54,7 +54,7 @@ if self.code_ai == "opencode_cli":
 ## バージョン確認と履歴管理
 
 - `opencode_cli` は `実行()` 内の `完全プロンプト` フローに入る（履歴送信不要、初回のみ system_prompt 付与）
-- 該当条件: `self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "codex_cli", "opencode_cli", "grok_cli"]`
+- 該当条件: `self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "agy_cli", "codex_cli", "aidiy_codex", "opencode_cli", "grok_cli"]`
 - バージョン確認は `_バージョン確認実行()` の汎用パスで実行する
 
 ## stdout / stderr の役割

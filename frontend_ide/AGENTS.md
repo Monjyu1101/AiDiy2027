@@ -9,13 +9,13 @@ IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU は AiDiy の正�
 - Code / Liveの通信・VS Code拡張ホストは `host/`、ファイルAPI・Office表示は `viewer/` に統合する。Discord・Slack（`frontend_channels`）は `host/` の共通処理を利用する。AIコアと共通の Hermes / Pi 実行基盤を使用し、UIに秘密情報を渡さない。Codeのオフライン利用はHermes / Piを選択して直接実行する。
 - ポートは自動割り当て。ElectronとWebで同じVue画面を使う。BrowserだけはElectron専用で、通常Webへの切り替えは行わない。
 - IDEのElectron版は「＋ Term」「＋ Code」「＋ Live」で同じプロジェクトの別ウィンドウを開く。Web版は画面内タブ。別窓はIDEの利用モード・セッションとの連携を必須とする。「終了」は子窓を閉じて起動画面へ戻す。タイトルバーの×は確認後にIDE全体を閉じる。オンライン判定はTermと同じtoolsポートのpingを使う。toolsの接続喪失では作業セッションと子窓を維持し、tools復帰時に再接続する。起動・権限・終了連携はElectronメインプロセスで管理する。
-- IDEの利用開始は手動。Term / Browser / Codeは利用開始後に開け、オンラインではNavi / Live / Avatar / Task / Teamも使う。Browserはオフラインでも起動・操作でき、AI解析だけtools接続中に有効とする。宇宙表示と文書ビューアは読み取り専用。
+- IDEの利用開始は手動。利用開始後は Term / Browser / Code / CPU と、Git 管理を確認できたプロジェクトの Git パネルを開ける。オンラインでは Navi / Live / Avatar / Task / Team も使う。Browserはオフラインでも起動・操作でき、AI解析だけtools接続中に有効とする。宇宙表示と文書ビューアは読み取り専用。
 - コンポーネント破棄時は購読、タイマー、描画、マイク、接続を片付ける。
 - 自作ソースには既存の著作権・利用条件の定型文を維持する。第三者ライセンスは配布物へ含める。
 - 実装変更は画面を撮影して確認する。手順はREADMEと `_AIDIY/knowledge/` に記載する。
 
 - Termは `ターミナルパネル.vue`（xterm.js）と `aidiy_term/term.mjs`（WebSocket）を使い、`aidiy_term/term-process.mjs` / `aidiy_term/term-worker.mjs` が端末ごとのPTYとプロセス終了を管理する。端末は通常のシェル権限を持ち、ファイルビューアだけが読み取り専用。TermにはVS Code拡張を作らない。
-- setup / cleanup の表示・処理順は IDE → Term → Browser → Navi → Code → Live → Task → Team → CPU。全体startの自動起動対象は従来どおりで、Navi / Browser は独立コマンドやDiagから手動起動し、Task / Team はそれに加えて全体startの個別選択（既定OFF）でも起動できる。共有依存物は各アプリの停止・解除後に片付ける。
+- setup / cleanup の表示順は IDE → Term → Browser → Navi → Code → Live → Task → Team → Git → CPU。全体startの自動起動対象は従来どおりで、Navi / Browser / Git は独立コマンドや Diag から手動起動し、Task / Team / CPU は全体 start の個別選択（既定OFF）でも起動できる。共有依存物は各アプリの停止・解除後に片付ける。
 
 - Navi は独立した開発案内画面。目標・作業項目・推定達成率・次のプロンプトの作成と再評価は読み取り専用。明示的に自動航行をオンにした場合だけ、右側に埋め込んだ専用Codeへ提案を送り、成功後に再評価する。Codeはファイル変更を伴う通常実行で、総合評価100%・3回連続の改善なし・失敗・対象変更などで停止する。停止要求は変更済みファイルの取り消しではない。単独起動は `aidiy_navi`、IDEでは「＋ Navi」から複数窓を開く。
 

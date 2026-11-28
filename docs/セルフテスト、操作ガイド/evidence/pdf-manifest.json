@@ -1,6 +1,6 @@
 {
-  "count": 26,
-  "pages": 423,
+  "count": 29,
+  "pages": 438,
   "generation": "docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs",
   "files": [
     {
@@ -22,58 +22,65 @@
     {
       "file": "セルフテスト,aidiy_browser,操作編.pdf",
       "pages": 17,
-      "sha256": "9305104e33f53f045e506ed17ca5b1b62115c6fe56c5473ac93d0035df575ec1",
-      "source_sha256": "93551bceb93837e74c9ac1d6f534db0fbdea9ef86442786999c192cf6109503d",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ1,2,14を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "sha256": "c5bf98d706d9b0db560ca7e150bfd8c4d92d32fb7448919be8b15075156ad988",
+      "source_sha256": "71f174b8eebf0a1233909ac41931fb9a194735475ee8cc1d76fa3f35a7fe54c7",
+      "review": "台帳の本文ハッシュ不一致を受けて現行Markdownから再生成。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_code,操作編.pdf",
       "pages": 11,
-      "sha256": "f4282040471848b01487add920baa552372264df70c2502da3369a1d5329b94e",
-      "source_sha256": "d5d0b65c1fe60328138988d5dd5d349c50f942c74e8868746d4c2d74d40f8e68",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ1,8,9を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "sha256": "7e385bf4cd5e2c8a53eb6540c97689abfbd1bf426808883fefc79f68cfb0c28a",
+      "source_sha256": "fab28dae29c581821e39de92fc183afbc2248971e941f1ae7a453c5fc677b260",
+      "review": "2026-11-28: 11月15日以降の変更に合わせて操作手順を更新。",
+      "alignment_review": "2026-11-28: 全ページの縮小表示、更新箇所の表示、PDFの相対参照先を確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_codex,操作編.pdf",
       "pages": 7,
-      "sha256": "f20a20db4c9e1eeff5347a5ed06c9b04849c011bc2f71a084bdde6f49c50fa1a",
-      "source_sha256": "ce9af13c960d90ee1c70fe2b31cfe64f3cf9bb67f8358f3c9536466d54bf851e",
-      "review": "新規作成。Windows実機でDiag起動・起動時の警告・/・/status・/model表示・会話1回・/quit・単体CLI終了を確認し、画像8点（アカウント情報は含めない範囲）を掲載。",
-      "alignment_review": "2026-11-15: PDFリンクを相対化。全ページを画像化して目視確認。"
+      "sha256": "afe13536ada026a897bc81c561cce9d22afa436debafa7829c1b34ce4d6ea841",
+      "source_sha256": "fd877d4f34f94a91530dca662ab383a3a655355c782edd825ec9ccd929acaec5",
+      "review": "現行のモデル選択またはCPUへの操作案内を反映。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.pdf",
       "pages": 29,
-      "sha256": "2dbcca7bc6ef77346c2e94a820aab5a24a1a051fbba77ae08a99e502c4c30e8e",
-      "source_sha256": "15949fa784d0a8a22dd3f07b69a20db71c1678f1a22e7155230de7616ae3a505",
-      "review": "資料整合：本文・画像・参照先を機械照合。PDFのページ内容ストリームを維持し、注釈リンクを相対化。全ページ目視の再実施・実機再試験はしていない。",
-      "alignment_review": "2026-11-07: リンク注釈のみ相対化。元PDFの本文ストリーム・画像資源・用紙寸法を維持。"
+      "sha256": "8f7aa15c027356f5082ddc71db6852ca6ef028ef58561c82257b39b1b92f6ad8",
+      "source_sha256": "cc0caaa1f06940e83cbebf843820392287811480078e6560c66bc6f159127465",
+      "review": "2026-11-28: 11月15日以降の変更に合わせて操作手順を更新。",
+      "alignment_review": "2026-11-28: 全ページの縮小表示、更新箇所の表示、PDFの相対参照先を確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_diag,システム起動編.pdf",
       "pages": 15,
-      "sha256": "970f5a4ebac5f407151f6902b700e914e65fdefa269a218482badbd1d9e75f4f",
-      "source_sha256": "1415e4b72a33e3294adb29bd7763305927043cbbbd4cb8ab4c63a02f6bcdaa36",
-      "review": "資料整合：本文・画像・参照先を機械照合。PDFのページ内容ストリームを維持し、注釈リンクを相対化。全ページ目視の再実施・実機再試験はしていない。",
-      "alignment_review": "2026-11-07: リンク注釈のみ相対化。元PDFの本文ストリーム・画像資源・用紙寸法を維持。"
+      "sha256": "ab99a6409f8ae7f17f7c905a590d81a99ae0f159bb1200434b954e5d8b8b6dfb",
+      "source_sha256": "8e1894b1e07b9eb627a2eeaafacae104f86a3a1535addfe7d2df22fd10be0469",
+      "review": "2026-11-28: 11月15日以降の変更に合わせて操作手順を更新。",
+      "alignment_review": "2026-11-28: 全ページの縮小表示、更新箇所の表示、PDFの相対参照先を確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_diag,ランチャー編.pdf",
       "pages": 30,
-      "sha256": "567b29a49d70f24f9a1509579d14549a21e03cf5c5483d51cca270920b43da83",
-      "source_sha256": "81a384509ee3e748f4f98147650053005a7040cc76bf1275be0ff3aba02f501a",
-      "review": "Term改名後の画面と現行24項目の画面（図101・201・301・401・501・606・610・613〜618）へ差し替えて再生成。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: 改名前画像の注記を削除し、PDFリンクを相対化。全ページを画像化して目視確認。"
+      "sha256": "2028b72b72f07b503c68e6735b6f7eb67d4bf9ab6979a4888101b5e447918d3c",
+      "source_sha256": "9b34afcd643fd62767219ea692085d45d404ebb03663646cbde3e5ee2c26269c",
+      "review": "現行のモデル選択またはCPUへの操作案内を反映。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_diag,環境確認編.pdf",
       "pages": 21,
-      "sha256": "065613760a9e60ff60f67d31c0decd03097efa460f09b3d0b30278b8da615167",
-      "source_sha256": "784e62bfa2564e20fa915db86ee988594a3a0111b8fb0dd20ca690d569710693",
-      "review": "資料整合：本文・画像・参照先を機械照合。PDFのページ内容ストリームを維持し、注釈リンクを相対化。全ページ目視の再実施・実機再試験はしていない。",
-      "alignment_review": "2026-11-07: リンク注釈のみ相対化。元PDFの本文ストリーム・画像資源・用紙寸法を維持。"
+      "sha256": "395a1340d81b3c5e6970282c4b970e4346389d631e0f078394123510c35664a7",
+      "source_sha256": "42a06341f722b2e5323be2e340f4b2bafe1722b3fc3a7f70262bafe9dc2c6a69",
+      "review": "2026-11-28: 11月15日以降の変更に合わせて操作手順を更新。",
+      "alignment_review": "2026-11-28: 全ページの縮小表示、更新箇所の表示、PDFの相対参照先を確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_diag,設定再起動編.pdf",
@@ -85,28 +92,30 @@
     },
     {
       "file": "セルフテスト,aidiy_discord,操作編.pdf",
-      "pages": 23,
-      "sha256": "0ac783bd2248c8709f03279cc8b62f6da17e87d282f6959ec4452f03ec1f9e98",
-      "source_sha256": "4dbb50f9f98b0489678d4b17ef3294cb56121f13ce51cb3c3f6ac366311482af",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ22を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "pages": 24,
+      "sha256": "1515558d48891951be9d211374f44a726cbf8ef28489c73f05cab0d9790c6df1",
+      "source_sha256": "3fb1022ecdb9e7e2fa62ef32438bad7a562a6bed5855ecae5647a59e77bf36c3",
+      "review": "2026-11-28: 接続前のコードとモデルの選択手順と画面例を改訂。",
+      "alignment_review": "2026-11-28: 再生成後、見出し・リンク・全ページの縮小画像を照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_hermes,操作編.pdf",
-      "pages": 2,
-      "sha256": "258e7b653b81558fbd4efa04018d9d84ff7968f60375ba4cadbcf241a4223ff3",
-      "source_sha256": "77506f38500fbac269416fa4254c9b09302f95ba542092cebb91c6e406f5d674",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。"
+      "pages": 3,
+      "sha256": "4b67aefdb6d4bfdfa2c8a4976078a03fb3caa52c07f8564137cc6db925415dbd",
+      "source_sha256": "442ee0f3c509752bcf6c91bd0a62cc2cb7444a283e51464167f280c9fd3bc062",
+      "review": "現行のモデル選択またはCPUへの操作案内を反映。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_ide,操作編.pdf",
       "pages": 31,
-      "sha256": "63aab5ad76fe6f169b8773b573ecae0edb8cd36bedf65c087507ba546aab5bb0",
-      "source_sha256": "5ec171b953d7b031ff50b19aa3874890fa02da5d8ef962f019654482b82a4fdc",
-      "review": "Term改名後の実画面へ画像を差し替えて再生成（Term・Hermes起動画面／IDEの3D・2D・Term独立窓）。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: 改名前画像の注記を削除し、PDFリンクを相対化。全ページを画像化して目視確認。",
-      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+      "sha256": "36289572e45a03e97c9b720c2bcabcd812a62d6f69541d95661fe3ac25968525",
+      "source_sha256": "6bf9da7cd85ae2a3779642859903864aca0a2969194f338609616424048b6582",
+      "review": "現行のモデル選択またはCPUへの操作案内を反映。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_live,操作編.pdf",
@@ -119,28 +128,30 @@
     },
     {
       "file": "セルフテスト,aidiy_navi,操作編.pdf",
-      "pages": 29,
-      "sha256": "f11e9695ea4a6785bb9700421cdfc08a4397728941a890e5875b0b6396ddd93d",
-      "source_sha256": "d1ae1e4fb182f49ff5669a9c685db12f4848fc1b60eb16831a3842683e3b85fd",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。",
-      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+      "pages": 30,
+      "sha256": "1ec3d116924ab8da0642e391e74265a9f2693ff17ca4830c7ddecade8340fb65",
+      "source_sha256": "18f7a191483877713f785c157a19590fb1b5a3347d66e04bf1e83c06a9759821",
+      "review": "現行のメニュー構成と折り紙3Dの手順・画面を掲載。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_pi,操作編.pdf",
       "pages": 8,
-      "sha256": "f41fa95874fdfb59b546f0b1e6241dd51cb60905f0b9dd139423df441cd4da75",
-      "source_sha256": "f97e00d2208e9d2bb7767547c0ece3e14be9c183f96b162537b88bc591f295fe",
-      "review": "新規作成。Windows実機でDiag起動・/・/session・/model表示・会話1回・/quit・単体CLI終了を確認し、画像7点を掲載。",
-      "alignment_review": "2026-11-15: PDFリンクを相対化。全ページを画像化して目視確認。"
+      "sha256": "3e0f6ba3df23956af0635add761bab0804b6f8deb93c444082f3314a443af35e",
+      "source_sha256": "9aad40ee9c5bd895e03e7516e930fbf072f64c6d2ad4210b0de47f74dc8a4992",
+      "review": "現行のモデル選択またはCPUへの操作案内を反映。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_slack,操作編.pdf",
-      "pages": 23,
-      "sha256": "1bd6b16795d1fdce207f84f0d65a737ed4199d1f518aea11a5a5c2a0ee41a61d",
-      "source_sha256": "e46ae7840b282cedc655e384d0bcb61d63a642e44abc0c19e9d5057ab626bfa9",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ22を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "pages": 24,
+      "sha256": "c751ae0928f0f8d94a115ac55ebcee4307fad472569fd76acef9c94b49b6f18b",
+      "source_sha256": "7c5ba920dea33ee18e7ad60630043d886f79330fcdbf13260306db8cd9a9782f",
+      "review": "2026-11-28: 接続前のコードとモデルの選択手順と画面例を改訂。",
+      "alignment_review": "2026-11-28: 再生成後、見出し・リンク・全ページの縮小画像を照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_task,操作編.pdf",
@@ -161,27 +172,29 @@
     {
       "file": "セルフテスト,aidiy_term,操作編.pdf",
       "pages": 4,
-      "sha256": "9b65d4a7f1e2e7ec0e437390a6de7e892b1b80dad72fa88a9a934bc91bb5fe7a",
-      "source_sha256": "2cc549a3b57cc7bfd4460254a7f5336b69a694e9f034782071304fd13b5e7de0",
-      "review": "Term改名後の実画面へ画像を差し替えて再生成（Term・Hermes起動画面／IDEの3D・2D・Term独立窓）。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: 改名前画像の注記を削除し、PDFリンクを相対化。全ページを画像化して目視確認。"
+      "sha256": "ff9ced83ee8743e20bef5a83a995e8a8f663b6c74c5e29e9052344b5b2d38e5f",
+      "source_sha256": "4b3572b72b60766c988aff2df3b7c95debcf46e89666b5a89df175066da3ab04",
+      "review": "窓幅に応じた文字サイズ調整、日本語入力位置と試験範囲を追記。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,backend_tools,主要メソッド編.pdf",
       "pages": 12,
-      "sha256": "be3cb78b983c7f71ba61f3695013cbd72db6ad4a4d65a093cd2c183f440b5e24",
-      "source_sha256": "e77f7ded8b078de6d3e571e47d8d9a7392a5107d74ca3ef0580f36418abdc7c3",
-      "review": "資料整合：本文・画像・参照先を照合。全12ページとSVG説明図7点を目視。PDFの表示内容を維持し、注釈リンクを相対化。実機再試験ではない。",
-      "alignment_review": "2026-11-07: リンク注釈のみ相対化。元PDFの本文ストリーム・画像資源・用紙寸法を維持。"
+      "sha256": "a3a76c9dc9f8a3ae71ac139a7c037e682c642f03a528277d20c30b0b3dfb798b",
+      "source_sha256": "ff71aebe566dba0308e7f5d7478860e4afe0e1db6da5a108e45b511fcc0e4279",
+      "review": "2026-11-28: 11月15日以降の変更に合わせて操作手順を更新。",
+      "alignment_review": "2026-11-28: 全ページの縮小表示、更新箇所の表示、PDFの相対参照先を確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,frontend_web,AiDiy編.pdf",
       "pages": 18,
-      "sha256": "89ec5d4d6e875ff5a167f89d31d2300c3f820ac5787bbc2f80f3dd950beb82ef",
-      "source_sha256": "c192951868b5094f56493c40ef9e18b75024ebfaa3cf9cfd0b57adadc02fb85d",
-      "review": "2026-11-09: 現行Markdownから再生成。掲載画像17点、相対リンク9件を照合。",
-      "alignment_review": "2026-11-09: 全18ページを描画し、全体一覧と更新した図のページを目視確認。",
-      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+      "sha256": "34e203b0dc1483dbc2869ca57266249418cd5352606c57de88a709064ad2c60d",
+      "source_sha256": "d490d71217fe6af08bd8b0d13e6fdc48ffcf5b9fdd4bca0bf0090bab81b2d371",
+      "review": "通常WebからT日誌編への案内を追加。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,frontend_web,生産・在庫管理編.pdf",
@@ -194,31 +207,58 @@
     {
       "file": "セルフテスト,frontend_web,配車管理編.pdf",
       "pages": 9,
-      "sha256": "ae80371ed3d5db60a5821c9d222a552c703ebc2ec2c920005f7abae6a4e51791",
-      "source_sha256": "43d92d1c9dd8e66c1e2d96041f804aa73945805f77dc8c077ba3fed8fd8433f0",
-      "review": "資料整合：本文・画像・参照先を機械照合。PDFのページ内容ストリームを維持し、注釈リンクを相対化。全ページ目視の再実施・実機再試験はしていない。",
-      "alignment_review": "2026-11-07: リンク注釈のみ相対化。元PDFの本文ストリーム・画像資源・用紙寸法を維持。"
+      "sha256": "9045976b3cfb6313e0decab1d20b70af342cfddac277b05560a1481c8f7df790",
+      "source_sha256": "2a300f38f02e41c3cd7cd160698a80af85a7cbdc7083bd05e668e8abc443d50d",
+      "review": "2026-11-28: 配車の読込、編集、再検索の手順を改訂。",
+      "alignment_review": "2026-11-28: 再生成後、見出し・リンク・全ページの縮小画像を照合。"
     },
     {
       "file": "セルフテスト,共通,確認結果.pdf",
-      "pages": 18,
-      "sha256": "6cf1b4d5a39582550998799e9d5ce82a2030ec34942f96f397f26f538e2b1ae0",
-      "source_sha256": "ee12261a0739611a6734748ca7bce1448701f18decb4a75afa380b2df51323be",
-      "review": "2026-11-15: Memoの既存実機8項目・7図を照合。追加自動試験81/85成功・権限制約4件と隔離Electron UI成功を区別して記載。",
-      "alignment_review": "2026-11-15: 全18ページを画像化し表示確認。Memoは各ページ、共通結果は縮小一覧と追記ページ拡大。リンク相対化・参照先存在を確認。",
-      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+      "pages": 21,
+      "sha256": "3039328cc8d6084c78dffdda91e91286e71d00e3121daa6cdba264bd9392a548",
+      "source_sha256": "7f1971dca28b8b72c755670544744beae77bf926e96d6d2e4191452d5c5a49f4",
+      "review": "28冊の初版から再試験し、冊子別照合表と業務DBの回帰結果を追記。",
+      "alignment_review": "2026-11-28: 確認結果の全ページを画像化。冒頭・末尾の実施件数、PDF注釈の参照先を確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_memo,操作編.pdf",
-      "pages": 6,
-      "sha256": "c7e999df2635aa216475b43311f31e2fc33d9e2b4aeefe2a19bf6a075ea72dca",
-      "source_sha256": "179fa6ba1da2df7ab606b50a92bee7caf2f3ddbba70a4995cf24f60620d309dd",
-      "review": "2026-11-15: Memoの既存実機8項目・7図を照合。追加自動試験81/85成功・権限制約4件と隔離Electron UI成功を区別して記載。",
-      "alignment_review": "2026-11-15: 全6ページを画像化し表示確認。Memoは各ページ、共通結果は縮小一覧と追記ページ拡大。リンク相対化・参照先存在を確認。",
+      "pages": 8,
+      "sha256": "a71088d2a3ca44d7c7a64d63c2525fdce7cc38bf59816cd53b3bf86a0c8b8c5b",
+      "source_sha256": "24910c6c63a4dacef62942677b0a0eba3890869423f0a3fbd8a1c65ed051b7ce",
+      "review": "2026-11-28: 期限の回転と明滅、解除の音声付き実演を追加。",
+      "alignment_review": "2026-11-28: 再生成後、見出し・リンク・全ページの縮小画像を照合。",
       "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+    },
+    {
+      "file": "セルフテスト,frontend_web,T日誌編.pdf",
+      "pages": 3,
+      "sha256": "b357e2b53d8f6a9d40e85ec38f196ba18e42a9a557acb6c58c734e3fcef3a153",
+      "source_sha256": "8c70f3222b45f3bbf2ee3bb2503c886b79d94965fe9b7c1e461182615f4d84e0",
+      "review": "日単位の件数と添付上限を明記し、隔離Web操作と回帰試験の結果を掲載。",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
+    },
+    {
+      "file": "セルフテスト,aidiy_git,操作編.pdf",
+      "pages": 2,
+      "sha256": "2a94fea48a4cbb327396222253e0928bc1a22c7337a8866be32bfe2c870ba48f",
+      "source_sha256": "14af747fba54633db0cc75732eb3f7a3212bdc64c23c0fa017a23272465a5f33",
+      "review": "記号で始まる本文の追加・削除とファイル見出しの読み方を更新。",
+      "alignment_review": "2026-11-28: 全ページを画像化し、追加した差分の説明と月間再試験結果、PDFの参照先とハッシュを照合。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化"
+    },
+    {
+      "file": "セルフテスト,aidiy_cpu,操作編.pdf",
+      "pages": 1,
+      "sha256": "5d4c2e3e7d5dd2a10a414500e4b391ab5df119b1927a21dbfa3abd2bf0340d20",
+      "source_sha256": "67c5c6902aa698a6a175c2b6d5c9883f9264a52566f05ec4e5f8f27818209771",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pdf-libでローカルリンクを相対化",
+      "alignment_review": "2026-11-28: 再生成したPDFの全ページを画像化して全体を目視。ローカルリンクと本文・PDFのハッシュを照合。",
+      "review": "Windowsホストの実測画面と背景の切替手順を新規掲載。"
     }
   ],
-  "visual_review": "2026-11-08: IDE全31ページと共通確認結果全17ページは再生成後に全ページ縮小表示と重点5ページ拡大を確認。Navigator全40ページの既存検証は維持。他20冊の今回の全ページ目視や新しい実機PASSを示さない。詳細はalignment_recordとevidence/IDE資料整合/PDF機械照合.json。",
+  "visual_review": "2026-11-28: 更新した14冊の全ページを画像化し、縮小一覧とCPU・Naviの図、結果台帳の追記箇所を目視。ほかの冊子は参照先、ハッシュ、ページ数を全数照合。",
   "alignment_evidence": "evidence/document-alignment.json",
   "prior_visual_review": "2026-11-03: 全22冊の追記を描画して目視確認。PDFテキスト抽出の日本語判定は使用せず、実表示で確認。",
   "alignment_record": "evidence/document-alignment.json",
@@ -230,5 +270,18 @@
       "セルフテスト,共通,確認結果.pdf"
     ],
     "scope": "Memo6ページ・共通結果18ページのみ。既存の他冊子の検証記録は維持。"
+  },
+  "current_verification": {
+    "date": "2026-11-28",
+    "books": 29,
+    "pages": 438,
+    "markdown_headings_in_pdf": 524,
+    "missing_headings": 0,
+    "local_pdf_link_annotations": 287,
+    "missing_local_pdf_targets": 0,
+    "pdf_and_source_hash_mismatches": 0,
+    "regenerated_books": 4,
+    "regenerated_pages": 65,
+    "scope": "Discord・Slack・配車管理・付箋の操作ガイドを再生成。全29冊の見出し・ローカルリンク先・PDFとMarkdownのハッシュを確認。"
   }
 }

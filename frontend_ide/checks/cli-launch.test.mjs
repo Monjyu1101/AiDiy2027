@@ -144,7 +144,7 @@ test('Windows npm .cmd: ラッパーは実行せず、同一許可パッケー�
   await writeFile(path.join(root, 'package.json'), JSON.stringify({ name: '@github/copilot', bin: { copilot: 'index.js' } }));
   await writeFile(path.join(root, 'index.js'), '// fixture, never execute');
   const resolved = await resolveCliLaunch('copilot', { autoApprove: true, env: { Path: `"${folder}"` }, platform: 'win32' });
-  assert.equal(resolved.executable, process.execPath);
+  assert.equal(resolved.executable, await realpath(process.execPath));
   assert.deepEqual(resolved.args, [path.join(root, 'index.js'), '--yolo']);
   assert.ok(!/cmd\.exe$/.test(resolved.executable));
   for (const bin of ['../escape.js', '/tmp/escape.js', 'C:/escape.js', 'bad\r\n.js', 'bin/../../escape.js', 'index.cmd']) {

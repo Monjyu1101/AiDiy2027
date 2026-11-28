@@ -32,6 +32,7 @@ def load():
                normalize_project_path=lambda p: str(Path(p)) if p and Path(p).is_absolute() else None,
                AI実行オプション=types.SimpleNamespace(読取専用予測=lambda: 'readonly'))
     env['read_prediction_history'] = Mock(return_value=[dict(role='user',turn_id=1,content='rename file')])
+    env['database_path'] = Mock(return_value=Path('fixture-core.db'))
     exec(compile(ast.Module(body=nodes,type_ignores=[]),str(SOURCE),'exec'),env)
     obj=object.__new__(env['PredictionLLM'])
     obj.root=ROOT
@@ -47,6 +48,8 @@ class ScopeTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as path:
             out=await obj._run_async(path)
             self.assertEqual(out['status'],'OK')
+            env['database_path'].assert_called_once_with('core')
+            self.assertEqual(env['read_prediction_history'].call_args.args[0], Path('fixture-core.db'))
             self.assertEqual(env['read_prediction_history'].call_args.args[1],path)
             kw=obj._code.run_async.call_args.kwargs
             self.assertEqual(kw['project_path'],path)
